@@ -17,5 +17,11 @@ export const elements = {
     // Sidebar
     get plotTitleInput() { return document.getElementById('plotTitleInput'); },
     get gridToggle() { return document.getElementById('gridToggle'); },
-    get beamToggle() { return document.getElementById('beamToggle'); }
+    get beamToggle() { return document.getElementById('beamToggle'); },
+
+    // Stepper Buttons
+    get btnStartUp() { return document.getElementById('btnStartUp'); },
+    get btnStartDown() { return document.getElementById('btnStartDown'); },
+    get btnEndUp() { return document.getElementById('btnEndUp'); },
+    get btnEndDown() { return document.getElementById('btnEndDown'); }
 };

@@ -87,6 +87,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 6. Steppers
+    if (elements.btnStartUp) {
+        elements.btnStartUp.addEventListener('click', () => {
+            elements.valStart.value = parseInt(elements.valStart.value) + 1;
+            const values = slider.validateInputValues(true);
+            renderChannel(values.start);
+        });
+        elements.btnStartDown.addEventListener('click', () => {
+            elements.valStart.value = parseInt(elements.valStart.value) - 1;
+            const values = slider.validateInputValues(true);
+            renderChannel(values.start);
+        });
+        elements.btnEndUp.addEventListener('click', () => {
+            elements.valEnd.value = parseInt(elements.valEnd.value) + 1;
+            const values = slider.validateInputValues(false);
+            renderChannel(values.end);
+        });
+        elements.btnEndDown.addEventListener('click', () => {
+            elements.valEnd.value = parseInt(elements.valEnd.value) - 1;
+            const values = slider.validateInputValues(false);
+            renderChannel(values.end);
+        });
+    }
+
     // --- HELPER FUNCTIONS ---
 
     async function handleUpload() {

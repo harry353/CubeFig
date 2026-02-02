@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FITS Viewer</title>
-    
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
@@ -13,6 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/spinner.css') }}">
 </head>
+
 <body>
 
     <header>
@@ -22,8 +24,22 @@
 
         <div class="slider-wrapper" id="sliderContainer">
             <div class="slider-labels">
-                <span>Start: <input type="number" id="valStart" class="inline-input" value="0"></span>
-                <span>End: <input type="number" id="valEnd" class="inline-input" value="0"></span>
+                <span class="stepper-label">
+                    Start:
+                    <div class="stepper">
+                        <button type="button" class="step-btn" id="btnStartDown" title="Decrease channel">▼</button>
+                        <input type="number" id="valStart" class="inline-input" value="0">
+                        <button type="button" class="step-btn" id="btnStartUp" title="Increase channel">▲</button>
+                    </div>
+                </span>
+                <span class="stepper-label">
+                    End:
+                    <div class="stepper">
+                        <button type="button" class="step-btn" id="btnEndDown" title="Decrease channel">▼</button>
+                        <input type="number" id="valEnd" class="inline-input" value="0">
+                        <button type="button" class="step-btn" id="btnEndUp" title="Increase channel">▲</button>
+                    </div>
+                </span>
             </div>
 
             <div class="range-slider">
@@ -36,7 +52,7 @@
     </header>
 
     <div class="main-container">
-        
+
         <aside class="sidebar">
             <div class="sidebar-group">
                 <label for="plotTitleInput">Plot Title (LaTeX supported)</label>
@@ -66,4 +82,5 @@
 
     <script type="module" src="{{ url_for('static', filename='js/main.js') }}?v=3"></script>
 </body>
+
 </html>
