@@ -1,0 +1,101 @@
+/* Slider Wrapper */
+.slider-wrapper {
+    display: none; 
+    flex-direction: column; 
+    justify-content: center;
+    gap: 5px; 
+    flex-grow: 1; 
+    max-width: 400px;
+    background: rgba(255,255,255,0.1); 
+    padding: 8px 15px; 
+    border-radius: 4px;
+}
+
+/* Labels */
+.slider-labels { 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 12px; 
+    width: 100%; 
+    margin-bottom: 5px; 
+}
+
+/* Inline Number Inputs (inside header) */
+.inline-input {
+    background: transparent; 
+    border: none; 
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    color: white; 
+    width: 40px; 
+    font-family: inherit; 
+    font-weight: bold;
+    font-size: inherit; 
+    text-align: center; 
+    padding: 0;
+}
+
+.inline-input:focus { 
+    outline: none; 
+    border-bottom: 1px solid #3498db; 
+    background: rgba(0,0,0,0.2); 
+}
+.inline-input::-webkit-outer-spin-button, 
+.inline-input::-webkit-inner-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+.inline-input { 
+    -moz-appearance: textfield; 
+}
+
+/* Range Slider Stack */
+.range-slider { 
+    position: relative; 
+    width: 100%; 
+    height: 5px; 
+}
+
+.range-slider input[type="range"] {
+    position: absolute; 
+    width: 100%; 
+    height: 5px; 
+    top: 0; 
+    left: 0;
+    pointer-events: none; 
+    background: none; 
+    -webkit-appearance: none; 
+    margin: 0;
+}
+
+.range-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; 
+    pointer-events: auto; 
+    height: 16px; 
+    width: 16px;
+    border-radius: 50%; 
+    background: #3498db; 
+    cursor: pointer;
+    border: 2px solid white; 
+    margin-top: -6px; 
+    position: relative; 
+    z-index: 2;
+}
+
+.slider-track { 
+    width: 100%; 
+    height: 4px; 
+    background: #555; 
+    position: absolute; 
+    top: 0; 
+    border-radius: 2px; 
+    z-index: 0; 
+}
+
+.slider-range { 
+    height: 4px; 
+    background: #3498db; 
+    position: absolute; 
+    top: 0; 
+    z-index: 1; 
+    border-radius: 2px; 
+}

@@ -1,0 +1,19 @@
+/* Viewport Container */
+.viewport {
+    flex-grow: 1;
+    background-color: #1e1e1e; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* FITS Image */
+#fits-image {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: none;
+}

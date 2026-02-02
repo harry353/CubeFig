@@ -1,0 +1,54 @@
+/* Sidebar Container */
+.sidebar {
+    width: 250px;
+    background-color: #34495e; 
+    color: white; 
+    padding: 20px;
+    display: flex; 
+    flex-direction: column;
+    gap: 20px;
+    border-right: 1px solid #2c3e50;
+    flex-shrink: 0;
+}
+
+/* Sidebar Groups */
+.sidebar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #bdc3c7;
+}
+
+/* Sidebar Text Inputs */
+.sidebar-group input[type="text"] {
+    background: #2c3e50;
+    border: 1px solid #566573;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.sidebar-group input[type="text"]:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* Checkbox Styling */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #ecf0f1;
+    user-select: none;
+    font-weight: normal; 
+}
+.checkbox-container input {
+    cursor: pointer;
+}

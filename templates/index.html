@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FITS Viewer</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/viewport.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/spinner.css') }}">
+</head>
+<body>
+
+    <header>
+        <div class="control-group">
+            <input type="file" id="fileInput" accept=".fits,.fit">
+        </div>
+
+        <div class="slider-wrapper" id="sliderContainer">
+            <div class="slider-labels">
+                <span>Start: <input type="number" id="valStart" class="inline-input" value="0"></span>
+                <span>End: <input type="number" id="valEnd" class="inline-input" value="0"></span>
+            </div>
+
+            <div class="range-slider">
+                <div class="slider-track"></div>
+                <div class="slider-range" id="sliderRange"></div>
+                <input type="range" id="sliderStart" min="0" max="100" value="0" step="1">
+                <input type="range" id="sliderEnd" min="0" max="100" value="0" step="1">
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <aside class="sidebar">
+            <div class="sidebar-group">
+                <label for="plotTitleInput">Plot Title (LaTeX supported)</label>
+                <input type="text" id="plotTitleInput" placeholder="e.g. Velocity Map $v_{rot}$">
+            </div>
+
+            <div class="sidebar-group">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="gridToggle">
+                    Show Gridlines
+                </label>
+            </div>
+
+            <div class="sidebar-group">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="beamToggle">
+                    Show Beam
+                </label>
+            </div>
+        </aside>
+
+        <div class="viewport">
+            <div class="spinner" id="loadingSpinner"></div>
+            <img id="fits-image" src="" alt="FITS Map">
+        </div>
+    </div>
+
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}?v=3"></script>
+</body>
+</html>
