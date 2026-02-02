@@ -36,6 +36,25 @@
     border-bottom-color: #3498db;
 }
 
+.tab-close {
+    margin-left: 10px;
+    font-size: 16px;
+    line-height: 1;
+    color: #95a5a6;
+    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+}
+
+.tab-close:hover {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
 .tab-item.hidden {
     display: none;
 }

@@ -402,6 +402,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tabName = tab.dataset.tab;
                 switchTab(tabName);
             });
+
+            const closeBtn = tab.querySelector('.tab-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const tabName = tab.dataset.tab;
+                    const key = tabName.replace('mom', '');
+
+                    delete state.momentImages[key];
+                    tab.classList.add('hidden');
+
+                    if (state.activeTab === tabName) {
+                        switchTab('cube');
+                    }
+                });
+            }
         });
     }
 
