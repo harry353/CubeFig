@@ -6,9 +6,10 @@ import sys
 # Load C library
 _lib = None
 _lib_path = os.path.join(os.path.dirname(__file__), 'cpp', 'moments.so')
+FORCE_PYTHON = False
 
 try:
-    if os.path.exists(_lib_path):
+    if os.path.exists(_lib_path) and not FORCE_PYTHON:
         _lib = ctypes.CDLL(_lib_path)
         # void calculate_moments_c(const float* data, const float* v, int channels, int height, int width, double dv, bool compute0, bool compute1, bool compute2, float* mom0_out, float* mom1_out, float* mom2_out)
         _lib.calculate_moments_c.argtypes = [
@@ -100,7 +101,7 @@ def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
     dv = float(abs(v[1] - v[0]) if len(v) > 1 else 1.0)
     
     # If C library is available, use it
-    if _lib:
+    if _lib and not FORCE_PYTHON:
         print("INFO: Using C implementation for moment calculation.")
         channels, height, width = subset.shape
         # Prepare arrays for C (must be contiguous and type float32)
@@ -142,5 +143,8 @@ def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
             # Fallback to python happens below
 
     # Fallback to pure Python
-    print("INFO: Using pure Python implementation for moment calculation.")
+    if FORCE_PYTHON:
+        print("INFO: Using pure Python implementation for moment calculation (FORCED).")
+    else:
+        print("INFO: Using pure Python implementation for moment calculation.")
     return compute_moments_python(subset, v, v_unit, bunit, requested_moments)

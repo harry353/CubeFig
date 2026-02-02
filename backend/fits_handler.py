@@ -15,6 +15,7 @@ class FitsState:
         self.unit = "Arbitrary Units"
         self.global_min = None
         self.global_max = None
+        self.moment_data = {} # {type: {'data': array, 'unit': label}}
 
     def load_fits(self, file_storage):
         """
@@ -38,6 +39,7 @@ class FitsState:
 
     def _process_hdul(self, hdul, filename):
         try:
+            self.moment_data = {}
             data = hdul[0].data
             header = hdul[0].header
             

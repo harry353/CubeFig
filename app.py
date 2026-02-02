@@ -131,5 +131,50 @@ def calculate_moments():
             
     return jsonify({'images': images})
 
+@app.route('/render_moment', methods=['POST'])
+def render_moment():
+    req_data = request.get_json()
+    mom_type = req_data.get('momentType')
+    
+    if state.data is None:
+        return jsonify({'error': 'No file loaded'}), 400
+    
+    if mom_type not in state.moment_data:
+        return jsonify({'error': 'Moment not calculated yet'}), 400
+        
+    mom_info = state.moment_data[mom_type]
+    mom_data = mom_info['data']
+    mom_unit = mom_info['unit']
+    
+    # Visualization params
+    title = req_data.get('title', '')
+    grid = req_data.get('grid', False)
+    show_beam = req_data.get('showBeam', False)
+    show_center = req_data.get('showCenter', False)
+    center_x = req_data.get('centerX')
+    center_y = req_data.get('centerY')
+    show_physical = req_data.get('showPhysical', False)
+    distance_val = req_data.get('distanceVal')
+    distance_unit = req_data.get('distanceUnit', 'Mpc')
+    cbar_unit = req_data.get('cbarUnit', 'None')
+    show_offset = req_data.get('showOffset', False)
+    offset_angle_unit = req_data.get('offsetAngleUnit', 'arcsec')
+    
+    mom_title = f"{title}\nMoment {mom_type}" if title else f"Moment {mom_type}"
+    
+    img_base64 = create_plot(
+        mom_data, state.wcs, mom_unit,
+        title=mom_title, grid=grid, beam=state.beam,
+        show_beam=show_beam, show_center=show_center,
+        center_x=center_x, center_y=center_y,
+        show_physical=show_physical, distance_val=distance_val,
+        distance_unit=distance_unit,
+        cbar_unit=cbar_unit,
+        show_offset=show_offset,
+        offset_angle_unit=offset_angle_unit
+    )
+    
+    return jsonify({'image': img_base64})
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

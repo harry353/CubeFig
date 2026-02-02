@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (data.is_loaded) {
                 setFileData(data);
-                renderChannel(0);
+                renderView(0);
             }
         } catch (e) {
             console.error("Initialization error:", e);
@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear moments from previous file
         state.momentImages = {};
         state.cubeImage = null;
+        state.tabSettings = {}; // Reset tab memory
+        state.tabSettings['cube'] = getDefaultSettings();
+
         elements.tabItems.forEach(tab => {
             if (tab.dataset.tab !== 'cube') tab.classList.add('hidden');
         });
@@ -91,8 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
         slider.updateSliderUI();
     }
 
-    function getRenderParams() {
+    function getDefaultSettings() {
         return {
+            channel: slider.getSliderValues ? slider.getSliderValues().start : 0,
             title: elements.plotTitleInput ? elements.plotTitleInput.value : '',
             grid: elements.gridToggle ? elements.gridToggle.checked : false,
             showBeam: elements.beamToggle ? elements.beamToggle.checked : false,
@@ -109,26 +113,99 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    async function renderChannel(index) {
-        if (state.isRendering) return;
+    function syncUIFromState(tabId) {
+        const s = state.tabSettings[tabId];
+        if (!s) return;
+
+        state.isSyncing = true;
+
+        // Sync channel if applicable (only for cube view really, but UI should match)
+        if (elements.sliderStart) elements.sliderStart.value = s.channel;
+        if (elements.valStart) elements.valStart.value = s.channel;
+        slider.updateSliderUI(); // Refresh the visual slider
+
+        if (elements.plotTitleInput) elements.plotTitleInput.value = s.title;
+        if (elements.gridToggle) elements.gridToggle.checked = s.grid;
+        if (elements.beamToggle) elements.beamToggle.checked = s.showBeam;
+        if (elements.centerToggle) {
+            elements.centerToggle.checked = s.showCenter;
+            elements.centerToggle.dispatchEvent(new Event('change'));
+        }
+        if (elements.centerXInput) elements.centerXInput.value = s.centerX;
+        if (elements.centerYInput) elements.centerYInput.value = s.centerY;
+        if (elements.offsetToggle) {
+            elements.offsetToggle.checked = s.showOffset;
+            elements.offsetToggle.dispatchEvent(new Event('change'));
+        }
+        if (elements.offsetUnit) elements.offsetUnit.value = s.offsetAngleUnit;
+        if (elements.physicalToggle) {
+            elements.physicalToggle.checked = s.showPhysical;
+            elements.physicalToggle.dispatchEvent(new Event('change'));
+        }
+        if (elements.distanceInput) elements.distanceInput.value = s.distanceVal;
+        if (elements.distanceUnit) elements.distanceUnit.value = s.distanceUnit;
+        if (elements.normGlobalToggle) elements.normGlobalToggle.checked = s.normGlobal;
+        if (elements.cbarUnit) elements.cbarUnit.value = s.cbarUnit;
+
+        state.isSyncing = false;
+    }
+
+    function updateStateFromUI() {
+        if (state.isSyncing) return;
+        state.tabSettings[state.activeTab] = getDefaultSettings();
+    }
+
+    function getRenderParams() {
+        // Now returns settings from state for the active tab
+        return state.tabSettings[state.activeTab] || getDefaultSettings();
+    }
+
+    async function renderView(index) {
+        if (state.isRendering || state.isSyncing) return;
+
+        // Ensure state is up to date with UI before rendering
+        updateStateFromUI();
+
+        // If an explicit index is provided, use it, otherwise use stored channel
+        const activeSettings = state.tabSettings[state.activeTab];
+        if (index !== undefined) {
+            activeSettings.channel = index;
+        }
+        const channelToRender = activeSettings.channel;
+
         state.isRendering = true;
         elements.spinner.style.display = 'block';
-        state.lastRenderedChannel = index;
 
         const params = getRenderParams();
 
         try {
-            const data = await api.fetchRender({
-                channel: index,
-                ...params
-            });
-
-            if (data.image) {
-                state.cubeImage = data.image;
-                if (state.activeTab === 'cube') {
-                    elements.imgElement.src = 'data:image/png;base64,' + data.image;
-                    elements.imgElement.style.display = 'block';
+            let data;
+            if (state.activeTab === 'cube') {
+                state.lastRenderedChannel = channelToRender;
+                data = await api.fetchRender({
+                    channel: channelToRender,
+                    ...params
+                });
+                if (data && data.image) {
+                    state.cubeImage = data.image;
                 }
+            } else {
+                const momType = state.activeTab.replace('mom', '');
+                data = await api.fetchRenderMoment({
+                    momentType: momType,
+                    ...params
+                });
+                if (data && data.image) {
+                    state.momentImages[momType] = data.image;
+                }
+            }
+
+            if (data && data.image) {
+                elements.imgElement.src = 'data:image/png;base64,' + data.image;
+                elements.imgElement.style.display = 'block';
+            } else if (data && data.error) {
+                console.error("Server Error:", data.error);
+                // If it's a moment error, maybe switch back to cube?
             }
         } catch (error) {
             console.error("Render Error:", error);
@@ -140,28 +217,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchTab(tabName) {
         state.activeTab = tabName;
-        // Update UI
+
+        // Ensure settings exist for this tab
+        if (!state.tabSettings[tabName]) {
+            state.tabSettings[tabName] = getDefaultSettings();
+        }
+
+        // Update UI controls to match this tab's settings
+        syncUIFromState(tabName);
+
+        // Update active tab UI
         elements.tabItems.forEach(t => {
             if (t.dataset.tab === tabName) t.classList.add('active');
             else t.classList.remove('active');
         });
 
-        // Display correct image
-        if (tabName === 'cube') {
-            if (state.cubeImage) {
-                elements.imgElement.src = 'data:image/png;base64,' + state.cubeImage;
-                elements.imgElement.style.display = 'block';
-            }
-        } else {
-            const key = tabName.replace('mom', '');
-            const momImg = state.momentImages[key];
-            if (momImg) {
-                elements.imgElement.src = 'data:image/png;base64,' + momImg;
-                elements.imgElement.style.display = 'block';
-            } else {
-                elements.imgElement.style.display = 'none';
-            }
-        }
+        // Trigger a re-render for the newly active view to ensure it reflects current global settings
+        renderView();
     }
 
     // --- EVENT LISTENERS ---
@@ -180,34 +252,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. Title Input
     if (elements.plotTitleInput) {
-        elements.plotTitleInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+        elements.plotTitleInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
     }
 
     // 3. Grid Toggle
     if (elements.gridToggle) {
         elements.gridToggle.addEventListener('change', () => {
-            renderChannel(state.lastRenderedChannel);
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // 3. Beam Toggle
     if (elements.beamToggle) {
         elements.beamToggle.addEventListener('change', () => {
-            renderChannel(state.lastRenderedChannel);
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // 4. Normalization Toggle
     if (elements.normGlobalToggle) {
         elements.normGlobalToggle.addEventListener('change', () => {
-            renderChannel(state.lastRenderedChannel);
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // 5. Colorbar Unit
     if (elements.cbarUnit) {
         elements.cbarUnit.addEventListener('change', () => {
-            renderChannel(state.lastRenderedChannel);
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
         });
     }
 
@@ -246,14 +325,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.centerInputsContainer.classList.remove('active');
             }
 
-            renderChannel(state.lastRenderedChannel);
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // 5. Center Inputs
     if (elements.centerXInput) {
-        elements.centerXInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
-        elements.centerYInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+        elements.centerXInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+        elements.centerYInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
     }
 
     // Offset Toggle
@@ -262,13 +347,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.offsetUnit) {
                 elements.offsetUnit.disabled = !elements.offsetToggle.checked;
             }
-            renderChannel(state.lastRenderedChannel);
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // Offset Unit
     if (elements.offsetUnit) {
-        elements.offsetUnit.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+        elements.offsetUnit.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
     }
 
     // 6. Physical Toggle
@@ -281,17 +369,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.distanceUnit) {
                 elements.distanceUnit.disabled = !active;
             }
-            renderChannel(state.lastRenderedChannel);
+            renderView(state.lastRenderedChannel);
         });
     }
 
     // 7. Distance Input & Unit
     if (elements.distanceInput) {
-        elements.distanceInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+        elements.distanceInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView();
+        });
     }
     if (elements.distanceUnit) {
         elements.distanceUnit.addEventListener('change', () => {
-            renderChannel(state.lastRenderedChannel);
+            updateStateFromUI();
+            renderView();
         });
     }
 
@@ -299,12 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.sliderStart && elements.sliderEnd) {
         elements.sliderStart.addEventListener('input', function () {
             slider.updateSliderUI();
-            renderChannel(elements.sliderStart.value);
+            renderView(elements.sliderStart.value);
         });
 
         elements.sliderEnd.addEventListener('input', function () {
             slider.updateSliderUI();
-            renderChannel(elements.sliderEnd.value);
+            renderView(elements.sliderEnd.value);
         });
     }
 
@@ -312,12 +404,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.valStart && elements.valEnd) {
         elements.valStart.addEventListener('change', function () {
             const values = slider.validateInputValues(true);
-            renderChannel(values.start);
+            renderView(values.start);
         });
 
         elements.valEnd.addEventListener('change', function () {
             const values = slider.validateInputValues(false);
-            renderChannel(values.end);
+            renderView(values.end);
         });
     }
 
@@ -326,22 +418,22 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnStartUp.addEventListener('click', () => {
             elements.valStart.value = parseInt(elements.valStart.value) + 1;
             const values = slider.validateInputValues(true);
-            renderChannel(values.start);
+            renderView(values.start);
         });
         elements.btnStartDown.addEventListener('click', () => {
             elements.valStart.value = parseInt(elements.valStart.value) - 1;
             const values = slider.validateInputValues(true);
-            renderChannel(values.start);
+            renderView(values.start);
         });
         elements.btnEndUp.addEventListener('click', () => {
             elements.valEnd.value = parseInt(elements.valEnd.value) + 1;
             const values = slider.validateInputValues(false);
-            renderChannel(values.end);
+            renderView(values.end);
         });
         elements.btnEndDown.addEventListener('click', () => {
             elements.valEnd.value = parseInt(elements.valEnd.value) - 1;
             const values = slider.validateInputValues(false);
-            renderChannel(values.end);
+            renderView(values.end);
         });
     }
 
@@ -377,9 +469,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.images) {
                     Object.keys(data.images).forEach(key => {
+                        const tabId = `mom${key}`;
                         state.momentImages[key] = data.images[key];
+                        // Initialize settings for the new moment tab
+                        state.tabSettings[tabId] = getDefaultSettings();
+
                         // Reveal the tab
-                        const tab = document.querySelector(`.tab-item[data-tab="mom${key}"]`);
+                        const tab = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
                         if (tab) tab.classList.remove('hidden');
                     });
 
@@ -437,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert("Error: " + data.error);
             } else if (data.success) {
                 setFileData(data);
-                renderChannel(0);
+                renderView(0);
             }
         } catch (error) {
             console.error('Upload Error:', error);

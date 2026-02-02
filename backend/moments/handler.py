@@ -40,6 +40,12 @@ def handle_moment_calculation(state, req_data):
             # Formatting title
             mom_title = f"{title}\nMoment {mom}" if title else f"Moment {mom}"
             
+            # Store raw data for future interactive re-renders
+            state.moment_data[mom] = {
+                'data': mom_data,
+                'unit': mom_unit
+            }
+
             img_base64 = create_plot(
                 mom_data, state.wcs, mom_unit, 
                 title=mom_title, grid=grid, beam=state.beam, 

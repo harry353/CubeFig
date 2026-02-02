@@ -4,5 +4,7 @@ export const state = {
     lastRenderedChannel: 0,
     momentImages: {},
     activeTab: 'cube',
-    cubeImage: null
+    cubeImage: null,
+    tabSettings: {},
+    isSyncing: false
 };

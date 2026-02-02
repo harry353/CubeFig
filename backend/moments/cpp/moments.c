@@ -1,83 +1,14 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
- * Computes moments 0, 1, and 2 for a single spatial pixel (row, col)
+ * Optimized Moment Map Calculation
  * 
- * data: float pointer to the 3D data (channels * height * width)
- * v: float pointer to velocity array (channels)
- * channels: number of channels in the subset
- * height, width: spatial dimensions
- * row, col: current pixel indices
- * compute0, compute1, compute2: flags for which moments to calculate
- * 
- * results: pointers to output arrays (height * width)
- */
-void compute_pixel_moments(
-    const float* data, 
-    const float* v,
-    int channels, 
-    int height, 
-    int width,
-    int row, 
-    int col,
-    bool compute0, 
-    bool compute1, 
-    bool compute2,
-    double dv,
-    float* mom0_out, 
-    float* mom1_out, 
-    float* mom2_out
-) {
-    double sum_i = 0.0;
-    double sum_iv = 0.0;
-    int pixel_idx = row * width + col;
-
-    // First pass: Sums for Mom0 and Mom1
-    for (int c = 0; c < channels; c++) {
-        float val = data[c * (height * width) + pixel_idx];
-        if (!isnan(val)) {
-            sum_i += val;
-            sum_iv += (double)val * v[c];
-        }
-    }
-
-    if (sum_i == 0.0) {
-        if (compute0) mom0_out[pixel_idx] = 0.0f;
-        if (compute1) mom1_out[pixel_idx] = NAN;
-        if (compute2) mom2_out[pixel_idx] = NAN;
-        return;
-    }
-
-    float m1 = (float)(sum_iv / sum_i);
-
-    if (compute0) mom0_out[pixel_idx] = (float)(sum_i * dv);
-    if (compute1) mom1_out[pixel_idx] = m1;
-
-    // Second pass: Variance for Mom2
-    if (compute2) {
-        double sum_i_v_m1_sq = 0.0;
-        for (int c = 0; c < channels; c++) {
-            float val = data[c * (height * width) + pixel_idx];
-            if (!isnan(val)) {
-                double diff = v[c] - m1;
-                sum_i_v_m1_sq += (double)val * (diff * diff);
-            }
-        }
-        mom2_out[pixel_idx] = (float)sqrt(sum_i_v_m1_sq / sum_i);
-    }
-}
-
-/**
- * Main entry point for C moment calculation
- * 
- * data: flattened 3D array (channels, height, width)
- * v: 1D array of world coordinates (velocity/frequency)
- * channels, height, width: dimensions
- * dv: step size
- * compute*: booleans
- * out*: result arrays
+ * Uses a single-pass "Horizontal Sweep" through memory for maximum cache performance.
+ * Leverages the variance identity Var(X) = E[X^2] - (E[X])^2 to compute Mom 2 in one go.
  */
 void calculate_moments_c(
     const float* data,
@@ -93,15 +24,75 @@ void calculate_moments_c(
     float* mom1_out,
     float* mom2_out
 ) {
-    for (int r = 0; r < height; r++) {
-        for (int c = 0; c < width; c++) {
-            compute_pixel_moments(
-                data, v, channels, height, width, 
-                r, c, 
-                compute0, compute1, compute2,
-                dv, 
-                mom0_out, mom1_out, mom2_out
-            );
+    int num_pixels = height * width;
+
+    // Use double precision for accumulators to prevent rounding errors during single-pass
+    double* sum_i  = (double*)calloc(num_pixels, sizeof(double));
+    double* sum_iv = (double*)calloc(num_pixels, sizeof(double));
+    double* sum_iv2 = (double*)calloc(num_pixels, sizeof(double));
+
+    if (!sum_i || !sum_iv || !sum_iv2) {
+        if (sum_i) free(sum_i);
+        if (sum_iv) free(sum_iv);
+        if (sum_iv2) free(sum_iv2);
+        return;
+    }
+
+    // Pass 1: Accumulate sums across all channels
+    // Outer loop over channels, inner loops over spatial coordinates (contiguous sweep)
+    for (int c = 0; c < channels; c++) {
+        float vc = v[c];
+        double vc_d = (double)vc;
+        double vc2_d = vc_d * vc_d;
+        
+        const float* channel_data = data + (c * num_pixels);
+
+        #pragma omp parallel for
+        for (int p = 0; p < num_pixels; p++) {
+            float val = channel_data[p];
+            if (!isnan(val)) {
+                sum_i[p] += (double)val;
+                if (compute1 || compute2) {
+                    double val_d = (double)val;
+                    sum_iv[p] += val_d * vc_d;
+                    if (compute2) {
+                        sum_iv2[p] += val_d * vc2_d;
+                    }
+                }
+            }
         }
     }
+
+    // Pass 2: Finalize moment values
+    #pragma omp parallel for
+    for (int p = 0; p < num_pixels; p++) {
+        double s_i = sum_i[p];
+        if (s_i == 0.0) {
+            if (compute0) mom0_out[p] = 0.0f;
+            if (compute1) mom1_out[p] = NAN;
+            if (compute2) mom2_out[p] = NAN;
+            continue;
+        }
+
+        if (compute0) {
+            mom0_out[p] = (float)(s_i * dv);
+        }
+
+        double m1 = 0.0;
+        if (compute1 || compute2) {
+            m1 = sum_iv[p] / s_i;
+            if (compute1) mom1_out[p] = (float)m1;
+        }
+
+        if (compute2) {
+            // Var(X) = E[X^2] - (E[X])^2
+            double m2_sq = (sum_iv2[p] / s_i) - (m1 * m1);
+            // Protect against tiny negative values due to floating point precision
+            mom2_out[p] = (m2_sq > 0.0) ? (float)sqrt(m2_sq) : 0.0f;
+        }
+    }
+
+    free(sum_i);
+    free(sum_iv);
+    free(sum_iv2);
 }
