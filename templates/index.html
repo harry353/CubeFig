@@ -13,13 +13,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/viewport.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/slider.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/spinner.css') }}">
+    <script>
+        window.INITIAL_CONFIG = {{ config | tojson | safe if config else '{}' }};
+    </script>
 </head>
 
 <body>
 
     <header>
         <div class="control-group">
+            <label for="fileInput" class="custom-file-upload">Choose File</label>
             <input type="file" id="fileInput" accept=".fits,.fit">
+            <span id="fileNameLabel">No file chosen</span>
         </div>
 
         <div class="slider-wrapper" id="sliderContainer">
@@ -74,14 +79,36 @@
             </div>
 
             <div class="sidebar-group">
-                <div class="center-control">
-                    <label class="checkbox-container">
-                        <input type="checkbox" id="centerToggle">
-                        Add Center
-                    </label>
-                    <div class="center-inputs" id="centerInputsContainer">
-                        <input type="number" id="centerX" placeholder="X" disabled>
-                        <input type="number" id="centerY" placeholder="Y" disabled>
+                <div class="center-control-wrapper">
+                    <div class="center-control">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="centerToggle">
+                            Add Center
+                        </label>
+                        <div class="center-inputs" id="centerInputsContainer">
+                            <input type="number" id="centerX" placeholder="X" disabled>
+                            <input type="number" id="centerY" placeholder="Y" disabled>
+                        </div>
+                    </div>
+
+                    <div class="nested-control" id="physicalGroup">
+                        <div class="physical-main-row">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="physicalToggle" disabled>
+                                Physical Axes
+                            </label>
+                            <div class="nested-inputs">
+                                <input type="number" id="distanceMpc" placeholder="Dist [pc]" disabled>
+                            </div>
+                        </div>
+                        <div class="unit-selector-row">
+                            <span class="sidebar-label">Phys. Ax. Units</span>
+                            <select id="distanceUnit" disabled>
+                                <option value="pc">pc</option>
+                                <option value="kpc">kpc</option>
+                                <option value="Mpc" selected>Mpc</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>

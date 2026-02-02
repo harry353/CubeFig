@@ -1,9 +1,12 @@
+import numpy as np
 import io
 import base64
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from astropy.visualization import ZScaleInterval
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from .physical_axes_plotter import draw_physical_axes
 from .beam_plotter import draw_beam
 
 # Global LaTeX settings
@@ -19,7 +22,8 @@ plt.rcParams.update({
 })
 
 def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, show_beam=False,
-                show_center=False, center_x=None, center_y=None):
+                show_center=False, center_x=None, center_y=None,
+                show_physical=False, distance_val=None, distance_unit='Mpc'):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
@@ -52,6 +56,9 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
             except Exception as e:
                 print(f"Error drawing center marker: {e}")
 
+        # --- PHYSICAL AXES ---
+        draw_physical_axes(ax, wcs_2d, show_physical, show_center, center_x, center_y, distance_val, distance_unit)
+
         # --- TITLE ---
         if title:
             ax.set_title(title, pad=15, fontsize=14)
@@ -75,7 +82,13 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         ax.tick_params(direction='out', color='black')
 
         # Colorbar
-        cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        divider = make_axes_locatable(ax)
+        cbar_pad = 0.85 if (show_physical and show_center and center_x is not None) else 0.25
+        # Use standard Axes class to avoid FITS/WCSAxes tick limitations
+        cax = divider.append_axes("right", size="5%", pad=cbar_pad, axes_class=plt.Axes)
+        cbar = plt.colorbar(im, cax=cax)
+        cax.tick_params(axis='x', which='both', bottom=False, top=False)
+        cax.tick_params(axis='y', which='both', left=False, right=True)
         if not (unit_label.startswith('[') and unit_label.endswith(']')):
             unit_label = f"[{unit_label}]"
         cbar.set_label(f'Intensity {unit_label}', rotation=270, labelpad=20)

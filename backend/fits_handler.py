@@ -1,4 +1,5 @@
 import io
+import os
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -15,14 +16,26 @@ class FitsState:
 
     def load_fits(self, file_storage):
         """
-        Reads bytes from a Flask FileStorage object and populates the state.
+        Reads from a Flask FileStorage object.
         """
         try:
-            # Read bytes into memory
-            file_stream = io.BytesIO(file_storage.read())
-            hdul = fits.open(file_stream)
-            
-            # Logic to find the primary data extension
+            hdul = fits.open(file_storage.stream)
+            return self._process_hdul(hdul, file_storage.filename)
+        except Exception as e:
+            return {"error": str(e)}
+
+    def load_fits_from_path(self, path):
+        """
+        Reads from a local file path.
+        """
+        try:
+            hdul = fits.open(path)
+            return self._process_hdul(hdul, os.path.basename(path))
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _process_hdul(self, hdul, filename):
+        try:
             data = hdul[0].data
             header = hdul[0].header
             
@@ -41,7 +54,7 @@ class FitsState:
             self.data = data
             self.header = header
             self.wcs = WCS(header)
-            self.filename = file_storage.filename
+            self.filename = filename
             
             # Extract Unit
             self.unit = header.get('BUNIT', 'Arbitrary Units').strip()

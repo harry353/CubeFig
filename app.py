@@ -1,12 +1,56 @@
 from flask import Flask, render_template, request, jsonify
 from backend.fits_handler import state
 from backend.plotter import create_plot
+import argparse
+import json
 
 app = Flask(__name__)
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='CubeFig2 - FITS Cube Viewer')
+parser.add_argument('--file', type=str, help='Path to FITS file to load')
+parser.add_argument('--title', type=str, default='', help='Default plot title')
+parser.add_argument('--show-grid', action='store_true', help='Enable grid by default')
+parser.add_argument('--show-beam', action='store_true', help='Show beam by default')
+parser.add_argument('--show-center', action='store_true', help='Show center by default')
+parser.add_argument('--center-coords', type=float, nargs=2, help='Initial center coordinates (X Y)')
+parser.add_argument('--show-physical', action='store_true', help='Enable physical axes by default')
+parser.add_argument('--target-distance', type=float, help='Target distance')
+parser.add_argument('--offset-unit', type=str, default='Mpc', choices=['pc', 'kpc', 'Mpc'], help='Distance unit')
+args, unknown = parser.parse_known_args()
+
+# Pre-load file if specified
+if args.file:
+    print(f"Loading initial file: {args.file}")
+    state.load_fits_from_path(args.file)
+
+# Initial state from CLI
+initial_config = {
+    'title': args.title,
+    'grid': args.show_grid,
+    'showBeam': args.show_beam,
+    'showCenter': args.show_center,
+    'centerX': args.center_coords[0] if args.center_coords and len(args.center_coords) > 0 else '',
+    'centerY': args.center_coords[1] if args.center_coords and len(args.center_coords) > 1 else '',
+    'showPhysical': args.show_physical,
+    'distanceVal': args.target_distance if args.target_distance is not None else '',
+    'distanceUnit': args.offset_unit,
+    'filename': state.filename if state.filename else ''
+}
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', config=initial_config)
+
+@app.route('/status')
+def get_status():
+    if state.data is not None:
+        return jsonify({
+            'is_loaded': True,
+            'filename': state.filename,
+            'channels': state.data.shape[0]
+        })
+    return jsonify({'is_loaded': False})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -38,14 +82,19 @@ def render_channel():
     show_center = req_data.get('showCenter', False)
     center_x = req_data.get('centerX')
     center_y = req_data.get('centerY')
+    show_physical = req_data.get('showPhysical', False)
+    distance_val = req_data.get('distanceVal')
+    distance_unit = req_data.get('distanceUnit', 'Mpc')
 
     image_slice = state.get_slice(channel_idx)
     
-    # Pass title, grid, beam, and center to plotter
+    # Pass title, grid, beam, center, and physical axes to plotter
     img_base64 = create_plot(image_slice, state.wcs, state.unit, 
                              title=title, grid=grid, beam=state.beam, 
                              show_beam=show_beam, show_center=show_center,
-                             center_x=center_x, center_y=center_y)
+                             center_x=center_x, center_y=center_y,
+                             show_physical=show_physical, distance_val=distance_val,
+                             distance_unit=distance_unit)
     
     return jsonify({'image': img_base64})
 
