@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const showPhysical = elements.physicalToggle ? elements.physicalToggle.checked : false;
         const distanceVal = elements.distanceInput ? elements.distanceInput.value : '';
         const distanceUnit = elements.distanceUnit ? elements.distanceUnit.value : 'Mpc';
+        const normGlobal = elements.normGlobalToggle ? elements.normGlobalToggle.checked : false;
 
         try {
             const data = await api.fetchRender({
@@ -97,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 centerY: centerY,
                 showPhysical: showPhysical,
                 distanceVal: distanceVal,
-                distanceUnit: distanceUnit
+                distanceUnit: distanceUnit,
+                normGlobal: normGlobal
             });
 
             if (data.image) {
@@ -141,6 +143,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Beam Toggle
     if (elements.beamToggle) {
         elements.beamToggle.addEventListener('change', () => {
+            renderChannel(state.lastRenderedChannel);
+        });
+    }
+
+    // 4. Normalization Toggle
+    if (elements.normGlobalToggle) {
+        elements.normGlobalToggle.addEventListener('change', () => {
             renderChannel(state.lastRenderedChannel);
         });
     }

@@ -13,6 +13,8 @@ class FitsState:
         self.wcs = None
         self.filename = None
         self.unit = "Arbitrary Units"
+        self.global_min = None
+        self.global_max = None
 
     def load_fits(self, file_storage):
         """
@@ -55,6 +57,10 @@ class FitsState:
             self.header = header
             self.wcs = WCS(header)
             self.filename = filename
+            
+            # Calculate global min/max for normalization
+            self.global_min = float(np.nanmin(data))
+            self.global_max = float(np.nanmax(data))
             
             # Extract Unit
             self.unit = header.get('BUNIT', 'Arbitrary Units').strip()

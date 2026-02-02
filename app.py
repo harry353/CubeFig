@@ -85,6 +85,7 @@ def render_channel():
     show_physical = req_data.get('showPhysical', False)
     distance_val = req_data.get('distanceVal')
     distance_unit = req_data.get('distanceUnit', 'Mpc')
+    norm_global = req_data.get('normGlobal', False)
 
     image_slice = state.get_slice(channel_idx)
     
@@ -94,7 +95,10 @@ def render_channel():
                              show_beam=show_beam, show_center=show_center,
                              center_x=center_x, center_y=center_y,
                              show_physical=show_physical, distance_val=distance_val,
-                             distance_unit=distance_unit)
+                             distance_unit=distance_unit,
+                             norm_global=norm_global, 
+                             global_min=state.global_min, 
+                             global_max=state.global_max)
     
     return jsonify({'image': img_base64})
 

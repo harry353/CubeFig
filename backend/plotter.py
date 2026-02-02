@@ -23,7 +23,8 @@ plt.rcParams.update({
 
 def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, show_beam=False,
                 show_center=False, center_x=None, center_y=None,
-                show_physical=False, distance_val=None, distance_unit='Mpc'):
+                show_physical=False, distance_val=None, distance_unit='Mpc',
+                norm_global=False, global_min=None, global_max=None):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
@@ -34,8 +35,12 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         ax = plt.subplot(projection=wcs_2d)
         
         # Plot Data
-        interval = ZScaleInterval()
-        vmin, vmax = interval.get_limits(image_data)
+        if norm_global and global_min is not None and global_max is not None:
+            vmin, vmax = global_min, global_max
+        else:
+            interval = ZScaleInterval()
+            vmin, vmax = interval.get_limits(image_data)
+            
         im = ax.imshow(image_data, origin='lower', cmap='viridis', vmin=vmin, vmax=vmax)
         
         # --- GRIDLINES FIX ---

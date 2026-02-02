@@ -19,6 +19,7 @@ export const elements = {
     get plotTitleInput() { return document.getElementById('plotTitleInput'); },
     get gridToggle() { return document.getElementById('gridToggle'); },
     get beamToggle() { return document.getElementById('beamToggle'); },
+    get normGlobalToggle() { return document.getElementById('normGlobalToggle'); },
 
     // Center Marker
     get centerToggle() { return document.getElementById('centerToggle'); },
