@@ -17,6 +17,8 @@ parser.add_argument('--center-coords', type=float, nargs=2, help='Initial center
 parser.add_argument('--show-physical', action='store_true', help='Enable physical axes by default')
 parser.add_argument('--target-distance', type=float, help='Target distance')
 parser.add_argument('--offset-unit', type=str, default='Mpc', choices=['pc', 'kpc', 'Mpc'], help='Distance unit')
+parser.add_argument('--cbar-unit', type=str, default='None', choices=['None', 'milli', 'micro', 'nano'], help='Colorbar unit scale')
+parser.add_argument('--normalize', action='store_true', help='Use global normalization')
 args, unknown = parser.parse_known_args()
 
 # Pre-load file if specified
@@ -35,7 +37,9 @@ initial_config = {
     'showPhysical': args.show_physical,
     'distanceVal': args.target_distance if args.target_distance is not None else '',
     'distanceUnit': args.offset_unit,
-    'filename': state.filename if state.filename else ''
+    'filename': state.filename if state.filename else '',
+    'normGlobal': args.normalize,
+    'cbarUnit': args.cbar_unit
 }
 
 @app.route('/')
@@ -86,6 +90,7 @@ def render_channel():
     distance_val = req_data.get('distanceVal')
     distance_unit = req_data.get('distanceUnit', 'Mpc')
     norm_global = req_data.get('normGlobal', False)
+    cbar_unit = req_data.get('cbarUnit', 'None')
 
     image_slice = state.get_slice(channel_idx)
     
@@ -98,7 +103,8 @@ def render_channel():
                              distance_unit=distance_unit,
                              norm_global=norm_global, 
                              global_min=state.global_min, 
-                             global_max=state.global_max)
+                             global_max=state.global_max,
+                             cbar_unit=cbar_unit)
     
     return jsonify({'image': img_base64})
 

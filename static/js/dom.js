@@ -20,6 +20,7 @@ export const elements = {
     get gridToggle() { return document.getElementById('gridToggle'); },
     get beamToggle() { return document.getElementById('beamToggle'); },
     get normGlobalToggle() { return document.getElementById('normGlobalToggle'); },
+    get cbarUnit() { return document.getElementById('cbarUnit'); },
 
     // Center Marker
     get centerToggle() { return document.getElementById('centerToggle'); },

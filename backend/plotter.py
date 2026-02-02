@@ -24,7 +24,8 @@ plt.rcParams.update({
 def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, show_beam=False,
                 show_center=False, center_x=None, center_y=None,
                 show_physical=False, distance_val=None, distance_unit='Mpc',
-                norm_global=False, global_min=None, global_max=None):
+                norm_global=False, global_min=None, global_max=None,
+                cbar_unit='None'):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
@@ -34,14 +35,36 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         fig = plt.figure(figsize=(8, 8))
         ax = plt.subplot(projection=wcs_2d)
         
+        # --- INTENSITY SCALING ---
+        scale_factor = 1.0
+        unit_prefix = ""
+        if cbar_unit == 'milli':
+            scale_factor = 1e3
+            unit_prefix = "m"
+        elif cbar_unit == 'micro':
+            scale_factor = 1e6
+            unit_prefix = r"$\mu$"
+        elif cbar_unit == 'nano':
+            scale_factor = 1e9
+            unit_prefix = "n"
+
+        # Apply scaling to data for plotting purposes
+        plot_data = image_data * scale_factor
+        scaled_min = (global_min * scale_factor) if global_min is not None else None
+        scaled_max = (global_max * scale_factor) if global_max is not None else None
+        
+        # Adjust unit label
+        # Example: Jy/beam -> mJy/beam
+        final_unit_label = f"{unit_prefix}{unit_label}"
+
         # Plot Data
-        if norm_global and global_min is not None and global_max is not None:
-            vmin, vmax = global_min, global_max
+        if norm_global and scaled_min is not None and scaled_max is not None:
+            vmin, vmax = scaled_min, scaled_max
         else:
             interval = ZScaleInterval()
-            vmin, vmax = interval.get_limits(image_data)
+            vmin, vmax = interval.get_limits(plot_data)
             
-        im = ax.imshow(image_data, origin='lower', cmap='viridis', vmin=vmin, vmax=vmax)
+        im = ax.imshow(plot_data, origin='lower', cmap='viridis', vmin=vmin, vmax=vmax)
         
         # --- GRIDLINES FIX ---
         if grid:
@@ -94,9 +117,9 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         cbar = plt.colorbar(im, cax=cax)
         cax.tick_params(axis='x', which='both', bottom=False, top=False)
         cax.tick_params(axis='y', which='both', left=False, right=True)
-        if not (unit_label.startswith('[') and unit_label.endswith(']')):
-            unit_label = f"[{unit_label}]"
-        cbar.set_label(f'Intensity {unit_label}', rotation=270, labelpad=20)
+        if not (final_unit_label.startswith('[') and final_unit_label.endswith(']')):
+            final_unit_label = f"[{final_unit_label}]"
+        cbar.set_label(f'Intensity {final_unit_label}', rotation=270, labelpad=20)
 
         # Save
         buf = io.BytesIO()

@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.distanceInput) elements.distanceInput.value = c.distanceVal || '';
         if (elements.distanceUnit) elements.distanceUnit.value = c.distanceUnit || 'Mpc';
+        if (elements.normGlobalToggle) elements.normGlobalToggle.checked = !!c.normGlobal;
+        if (elements.cbarUnit) elements.cbarUnit.value = c.cbarUnit || 'None';
 
         // Display initial filename if pre-loaded
         if (elements.fileNameLabel && c.filename) {
@@ -86,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const distanceVal = elements.distanceInput ? elements.distanceInput.value : '';
         const distanceUnit = elements.distanceUnit ? elements.distanceUnit.value : 'Mpc';
         const normGlobal = elements.normGlobalToggle ? elements.normGlobalToggle.checked : false;
+        const cbarUnit = elements.cbarUnit ? elements.cbarUnit.value : 'None';
 
         try {
             const data = await api.fetchRender({
@@ -99,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 showPhysical: showPhysical,
                 distanceVal: distanceVal,
                 distanceUnit: distanceUnit,
-                normGlobal: normGlobal
+                normGlobal: normGlobal,
+                cbarUnit: cbarUnit
             });
 
             if (data.image) {
@@ -150,6 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Normalization Toggle
     if (elements.normGlobalToggle) {
         elements.normGlobalToggle.addEventListener('change', () => {
+            renderChannel(state.lastRenderedChannel);
+        });
+    }
+
+    // 5. Colorbar Unit
+    if (elements.cbarUnit) {
+        elements.cbarUnit.addEventListener('change', () => {
             renderChannel(state.lastRenderedChannel);
         });
     }
