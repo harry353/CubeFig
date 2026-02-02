@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from backend.fits_handler import state
 from backend.plotter import create_plot
+from backend.moments.handler import handle_moment_calculation
 import argparse
 import json
 
@@ -19,6 +20,10 @@ parser.add_argument('--target-distance', type=float, help='Target distance')
 parser.add_argument('--offset-unit', type=str, default='Mpc', choices=['pc', 'kpc', 'Mpc'], help='Distance unit')
 parser.add_argument('--cbar-unit', type=str, default='None', choices=['None', 'milli', 'micro', 'nano'], help='Colorbar unit scale')
 parser.add_argument('--normalize', action='store_true', help='Use global normalization')
+parser.add_argument('--show-offset', action='store_true', help='Show coordinate offsets from center')
+parser.add_argument('--offset-angle-unit', type=str, default='arcsec', choices=['arcsec', 'milliarcsec'], help='Angle offset unit')
+parser.add_argument('--start-chan', type=int, help='Initial start channel')
+parser.add_argument('--end-chan', type=int, help='Initial end channel')
 args, unknown = parser.parse_known_args()
 
 # Pre-load file if specified
@@ -39,7 +44,11 @@ initial_config = {
     'distanceUnit': args.offset_unit,
     'filename': state.filename if state.filename else '',
     'normGlobal': args.normalize,
-    'cbarUnit': args.cbar_unit
+    'cbarUnit': args.cbar_unit,
+    'showOffset': args.show_offset,
+    'offsetAngleUnit': args.offset_angle_unit,
+    'startChan': args.start_chan if args.start_chan is not None else '',
+    'endChan': args.end_chan if args.end_chan is not None else ''
 }
 
 @app.route('/')
@@ -91,6 +100,8 @@ def render_channel():
     distance_unit = req_data.get('distanceUnit', 'Mpc')
     norm_global = req_data.get('normGlobal', False)
     cbar_unit = req_data.get('cbarUnit', 'None')
+    show_offset = req_data.get('showOffset', False)
+    offset_angle_unit = req_data.get('offsetAngleUnit', 'arcsec')
 
     image_slice = state.get_slice(channel_idx)
     
@@ -104,9 +115,21 @@ def render_channel():
                              norm_global=norm_global, 
                              global_min=state.global_min, 
                              global_max=state.global_max,
-                             cbar_unit=cbar_unit)
+                             cbar_unit=cbar_unit,
+                             show_offset=show_offset,
+                             offset_angle_unit=offset_angle_unit)
     
     return jsonify({'image': img_base64})
+
+@app.route('/calculate_moments', methods=['POST'])
+def calculate_moments():
+    req_data = request.get_json()
+    images = handle_moment_calculation(state, req_data)
+    
+    if images is None:
+        return jsonify({'error': 'No file loaded'}), 400
+            
+    return jsonify({'images': images})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

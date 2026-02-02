@@ -1,7 +1,47 @@
 /* Viewport Container */
 .viewport {
     flex-grow: 1;
-    background-color: #1e1e1e; 
+    background-color: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: relative;
+    overflow: hidden;
+}
+
+.tabs-container {
+    display: flex;
+    background: #2c3e50;
+    padding: 0 10px;
+    border-bottom: 1px solid #273746;
+}
+
+.tab-item {
+    padding: 10px 20px;
+    color: #bdc3c7;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.tab-item.active {
+    color: white;
+    border-bottom-color: #3498db;
+}
+
+.tab-item.hidden {
+    display: none;
+}
+
+.image-wrapper {
+    flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;

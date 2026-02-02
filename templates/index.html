@@ -110,6 +110,19 @@
                         </div>
                     </div>
 
+                    <div class="nested-control">
+                        <div class="physical-main-row">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="offsetToggle" disabled>
+                                Change Coordinates To Offset
+                            </label>
+                            <select id="offsetUnit" disabled>
+                                <option value="arcsec">arcsec</option>
+                                <option value="milliarcsec">milliarcsec</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="nested-control" id="physicalGroup">
                         <div class="physical-main-row">
                             <label class="checkbox-container">
@@ -130,12 +143,37 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                <div class="sidebar-group">
+                    <div class="center-control-wrapper">
+                        <label class="sidebar-label"
+                            style="font-weight: 600; color: #ecf0f1; margin-bottom: 5px;">Moment Maps</label>
+                        <div class="nested-control">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="mom0Toggle"> Moment 0 (Intensity)
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="mom1Toggle"> Moment 1 (Velocity)
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="mom2Toggle"> Moment 2 (Dispersion)
+                            </label>
+                        </div>
+                        <button id="calculateMomentsBtn" class="calculate-btn">Calculate Maps</button>
+                    </div>
+                </div>
         </aside>
 
         <div class="viewport">
-            <div class="spinner" id="loadingSpinner"></div>
-            <img id="fits-image" src="" alt="FITS Map">
+            <div class="tabs-container">
+                <div class="tab-item active" data-tab="cube">Cube View</div>
+                <div class="tab-item hidden" data-tab="mom0">Moment 0</div>
+                <div class="tab-item hidden" data-tab="mom1">Moment 1</div>
+                <div class="tab-item hidden" data-tab="mom2">Moment 2</div>
+            </div>
+            <div class="image-wrapper">
+                <div class="spinner" id="loadingSpinner"></div>
+                <img id="fits-image" src="" alt="FITS Map">
+            </div>
         </div>
     </div>
 

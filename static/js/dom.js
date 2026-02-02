@@ -24,6 +24,8 @@ export const elements = {
 
     // Center Marker
     get centerToggle() { return document.getElementById('centerToggle'); },
+    get offsetToggle() { return document.getElementById('offsetToggle'); },
+    get offsetUnit() { return document.getElementById('offsetUnit'); },
     get centerXInput() { return document.getElementById('centerX'); },
     get centerYInput() { return document.getElementById('centerY'); },
     get centerInputsContainer() { return document.getElementById('centerInputsContainer'); },
@@ -37,5 +39,12 @@ export const elements = {
     get btnStartUp() { return document.getElementById('btnStartUp'); },
     get btnStartDown() { return document.getElementById('btnStartDown'); },
     get btnEndUp() { return document.getElementById('btnEndUp'); },
-    get btnEndDown() { return document.getElementById('btnEndDown'); }
+    get btnEndDown() { return document.getElementById('btnEndDown'); },
+
+    // Moment Maps
+    get mom0Toggle() { return document.getElementById('mom0Toggle'); },
+    get mom1Toggle() { return document.getElementById('mom1Toggle'); },
+    get mom2Toggle() { return document.getElementById('mom2Toggle'); },
+    get calculateMomentsBtn() { return document.getElementById('calculateMomentsBtn'); },
+    get tabItems() { return document.querySelectorAll('.tab-item'); }
 };

@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Manually trigger change to enable sub-inputs
             elements.centerToggle.dispatchEvent(new Event('change'));
         }
+        if (elements.offsetToggle) {
+            elements.offsetToggle.checked = !!c.showOffset;
+            if (elements.offsetUnit) {
+                elements.offsetUnit.value = c.offsetAngleUnit || 'arcsec';
+            }
+            elements.offsetToggle.dispatchEvent(new Event('change'));
+        }
         if (elements.centerXInput) elements.centerXInput.value = c.centerX || '';
         if (elements.centerYInput) elements.centerYInput.value = c.centerY || '';
         if (elements.physicalToggle) {
@@ -61,15 +68,45 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.valStart) elements.valStart.max = max;
         if (elements.valEnd) elements.valEnd.max = max;
 
-        // Default values
-        if (elements.sliderStart) elements.sliderStart.value = 0;
-        if (elements.sliderEnd) elements.sliderEnd.value = max;
+        // Default values or from CLI
+        const c = window.INITIAL_CONFIG || {};
+        if (elements.sliderStart) elements.sliderStart.value = c.startChan !== '' ? c.startChan : 0;
+        if (elements.sliderEnd) elements.sliderEnd.value = c.endChan !== '' ? c.endChan : max;
+
+        if (elements.valStart) elements.valStart.value = elements.sliderStart.value;
+        if (elements.valEnd) elements.valEnd.value = elements.sliderEnd.value;
 
         if (elements.fileNameLabel && data.filename) {
             elements.fileNameLabel.textContent = data.filename;
         }
 
+        // Clear moments from previous file
+        state.momentImages = {};
+        state.cubeImage = null;
+        elements.tabItems.forEach(tab => {
+            if (tab.dataset.tab !== 'cube') tab.classList.add('hidden');
+        });
+        switchTab('cube');
+
         slider.updateSliderUI();
+    }
+
+    function getRenderParams() {
+        return {
+            title: elements.plotTitleInput ? elements.plotTitleInput.value : '',
+            grid: elements.gridToggle ? elements.gridToggle.checked : false,
+            showBeam: elements.beamToggle ? elements.beamToggle.checked : false,
+            showCenter: elements.centerToggle ? elements.centerToggle.checked : false,
+            centerX: elements.centerXInput ? elements.centerXInput.value : '',
+            centerY: elements.centerYInput ? elements.centerYInput.value : '',
+            showOffset: elements.offsetToggle ? elements.offsetToggle.checked : false,
+            offsetAngleUnit: elements.offsetUnit ? elements.offsetUnit.value : 'arcsec',
+            showPhysical: elements.physicalToggle ? elements.physicalToggle.checked : false,
+            distanceVal: elements.distanceInput ? elements.distanceInput.value : '',
+            distanceUnit: elements.distanceUnit ? elements.distanceUnit.value : 'Mpc',
+            normGlobal: elements.normGlobalToggle ? elements.normGlobalToggle.checked : false,
+            cbarUnit: elements.cbarUnit ? elements.cbarUnit.value : 'None'
+        };
     }
 
     async function renderChannel(index) {
@@ -78,43 +115,52 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.spinner.style.display = 'block';
         state.lastRenderedChannel = index;
 
-        const title = elements.plotTitleInput ? elements.plotTitleInput.value : '';
-        const showGrid = elements.gridToggle ? elements.gridToggle.checked : false;
-        const showBeam = elements.beamToggle ? elements.beamToggle.checked : false;
-        const showCenter = elements.centerToggle ? elements.centerToggle.checked : false;
-        const centerX = elements.centerXInput ? elements.centerXInput.value : '';
-        const centerY = elements.centerYInput ? elements.centerYInput.value : '';
-        const showPhysical = elements.physicalToggle ? elements.physicalToggle.checked : false;
-        const distanceVal = elements.distanceInput ? elements.distanceInput.value : '';
-        const distanceUnit = elements.distanceUnit ? elements.distanceUnit.value : 'Mpc';
-        const normGlobal = elements.normGlobalToggle ? elements.normGlobalToggle.checked : false;
-        const cbarUnit = elements.cbarUnit ? elements.cbarUnit.value : 'None';
+        const params = getRenderParams();
 
         try {
             const data = await api.fetchRender({
                 channel: index,
-                title: title,
-                grid: showGrid,
-                showBeam: showBeam,
-                showCenter: showCenter,
-                centerX: centerX,
-                centerY: centerY,
-                showPhysical: showPhysical,
-                distanceVal: distanceVal,
-                distanceUnit: distanceUnit,
-                normGlobal: normGlobal,
-                cbarUnit: cbarUnit
+                ...params
             });
 
             if (data.image) {
-                elements.imgElement.src = 'data:image/png;base64,' + data.image;
-                elements.imgElement.style.display = 'block';
+                state.cubeImage = data.image;
+                if (state.activeTab === 'cube') {
+                    elements.imgElement.src = 'data:image/png;base64,' + data.image;
+                    elements.imgElement.style.display = 'block';
+                }
             }
         } catch (error) {
             console.error("Render Error:", error);
         } finally {
             elements.spinner.style.display = 'none';
             state.isRendering = false;
+        }
+    }
+
+    function switchTab(tabName) {
+        state.activeTab = tabName;
+        // Update UI
+        elements.tabItems.forEach(t => {
+            if (t.dataset.tab === tabName) t.classList.add('active');
+            else t.classList.remove('active');
+        });
+
+        // Display correct image
+        if (tabName === 'cube') {
+            if (state.cubeImage) {
+                elements.imgElement.src = 'data:image/png;base64,' + state.cubeImage;
+                elements.imgElement.style.display = 'block';
+            }
+        } else {
+            const key = tabName.replace('mom', '');
+            const momImg = state.momentImages[key];
+            if (momImg) {
+                elements.imgElement.src = 'data:image/png;base64,' + momImg;
+                elements.imgElement.style.display = 'block';
+            } else {
+                elements.imgElement.style.display = 'none';
+            }
         }
     }
 
@@ -171,6 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const active = elements.centerToggle.checked;
             elements.centerXInput.disabled = !active;
             elements.centerYInput.disabled = !active;
+            if (elements.offsetToggle) {
+                elements.offsetToggle.disabled = !active;
+                if (!active) elements.offsetToggle.checked = false;
+                if (elements.offsetUnit) {
+                    elements.offsetUnit.disabled = !active || !elements.offsetToggle.checked;
+                }
+            }
 
             // Physical toggle only active if Center is active
             if (elements.physicalToggle) {
@@ -201,6 +254,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.centerXInput) {
         elements.centerXInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
         elements.centerYInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+    }
+
+    // Offset Toggle
+    if (elements.offsetToggle) {
+        elements.offsetToggle.addEventListener('change', () => {
+            if (elements.offsetUnit) {
+                elements.offsetUnit.disabled = !elements.offsetToggle.checked;
+            }
+            renderChannel(state.lastRenderedChannel);
+        });
+    }
+
+    // Offset Unit
+    if (elements.offsetUnit) {
+        elements.offsetUnit.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
     }
 
     // 6. Physical Toggle
@@ -274,6 +342,66 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.valEnd.value = parseInt(elements.valEnd.value) - 1;
             const values = slider.validateInputValues(false);
             renderChannel(values.end);
+        });
+    }
+
+    // 7. Moment Calculation
+    if (elements.calculateMomentsBtn) {
+        elements.calculateMomentsBtn.addEventListener('click', async () => {
+            const start = elements.valStart.value;
+            const end = elements.valEnd.value;
+            const moments = [];
+            if (elements.mom0Toggle.checked) moments.push('0');
+            if (elements.mom1Toggle.checked) moments.push('1');
+            if (elements.mom2Toggle.checked) moments.push('2');
+
+            if (moments.length === 0) {
+                alert("Please select at least one moment to calculate.");
+                return;
+            }
+
+            elements.spinner.style.display = 'block';
+            try {
+                const params = getRenderParams();
+                const response = await fetch('/calculate_moments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startChan: start,
+                        endChan: end,
+                        moments: moments,
+                        ...params
+                    })
+                });
+                const data = await response.json();
+
+                if (data.images) {
+                    Object.keys(data.images).forEach(key => {
+                        state.momentImages[key] = data.images[key];
+                        // Reveal the tab
+                        const tab = document.querySelector(`.tab-item[data-tab="mom${key}"]`);
+                        if (tab) tab.classList.remove('hidden');
+                    });
+
+                    // Switch to the first calculated moment
+                    switchTab(`mom${moments[0]}`);
+                }
+            } catch (err) {
+                console.error("Moment calculation error:", err);
+                alert("Failed to calculate moments. Check console for details.");
+            } finally {
+                elements.spinner.style.display = 'none';
+            }
+        });
+    }
+
+    // 8. Tabs
+    if (elements.tabItems) {
+        elements.tabItems.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                switchTab(tabName);
+            });
         });
     }
 

@@ -25,15 +25,53 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
                 show_center=False, center_x=None, center_y=None,
                 show_physical=False, distance_val=None, distance_unit='Mpc',
                 norm_global=False, global_min=None, global_max=None,
-                cbar_unit='None'):
+                cbar_unit='None', show_offset=False, offset_angle_unit='arcsec'):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
         
         wcs_2d = wcs.celestial
-
         fig = plt.figure(figsize=(8, 8))
-        ax = plt.subplot(projection=wcs_2d)
+
+        if show_offset and center_x is not None and center_y is not None:
+            # Shift WCS to be a relative offset from center
+            wcs_axes = wcs_2d.deepcopy()
+            try:
+                # Set reference pixel to center (FITS is 1-indexed)
+                wcs_axes.wcs.crpix = [float(center_x) + 1, float(center_y) + 1]
+                # Set reference value to 0,0
+                wcs_axes.wcs.crval = [0, 0]
+                
+                # Change CTYPE to generic linear to allow arbitrary scaling without RA/Dec limits
+                wcs_axes.wcs.ctype = ["LINEAR", "LINEAR"]
+                
+                # Scaling factor (1 deg = 3600 arcsec, or 3,600,000 mas)
+                if offset_angle_unit == 'milliarcsec':
+                    angle_multiplier = 3600.0 * 1000.0
+                    unit_str = 'mas'
+                else:
+                    angle_multiplier = 3600.0
+                    unit_str = 'arcsec'
+
+                if hasattr(wcs_axes.wcs, 'cdelt'):
+                    wcs_axes.wcs.cdelt = [d * angle_multiplier for d in wcs_axes.wcs.cdelt]
+                if hasattr(wcs_axes.wcs, 'cd'):
+                    wcs_axes.wcs.cd = wcs_axes.wcs.cd * angle_multiplier
+                    
+                ax = plt.subplot(projection=wcs_axes)
+                # No special formatter needed for LINEAR, defaults to decimal
+                
+                ax.set_xlabel(rf'$\Delta$ RA [{unit_str}]')
+                ax.set_ylabel(rf'$\Delta$ Dec [{unit_str}]')
+            except Exception as e:
+                print(f"Error creating offset WCS: {e}")
+                ax = plt.subplot(projection=wcs_2d)
+                ax.set_xlabel('Right Ascension [J2000]')
+                ax.set_ylabel('Declination [J2000]')
+        else:
+            ax = plt.subplot(projection=wcs_2d)
+            ax.set_xlabel('Right Ascension [J2000]')
+            ax.set_ylabel('Declination [J2000]')
         
         # --- INTENSITY SCALING ---
         scale_factor = 1.0
@@ -102,9 +140,9 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         except:
             dec = ax.coords[1]
 
-        # Standard Labels
-        ax.set_xlabel('Right Ascension [J2000]')
-        ax.set_ylabel('Declination [J2000]')
+        # Standard Labels (already handled above if offset)
+        # ax.set_xlabel('Right Ascension [J2000]')
+        # ax.set_ylabel('Declination [J2000]')
 
         # Styling
         ax.tick_params(direction='out', color='black')

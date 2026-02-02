@@ -207,3 +207,23 @@
 .checkbox-container input {
     cursor: pointer;
 }
+
+.calculate-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin-top: 5px;
+}
+
+.calculate-btn:hover {
+    background-color: #2980b9;
+}
+
+.calculate-btn:active {
+    background-color: #2471a3;
+}
