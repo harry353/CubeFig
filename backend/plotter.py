@@ -18,7 +18,8 @@ plt.rcParams.update({
     "ytick.labelsize": 10,
 })
 
-def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, show_beam=False):
+def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, show_beam=False,
+                show_center=False, center_x=None, center_y=None):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
@@ -40,6 +41,16 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         # --- BEAM INFO ---
         if show_beam:
             draw_beam(ax, wcs_2d, beam, image_data.shape)
+
+        # --- CENTER MARKER ---
+        if show_center and center_x is not None and center_y is not None:
+            try:
+                cx, cy = float(center_x), float(center_y)
+                # Red star with black outline
+                ax.plot(cx, cy, marker='*', color='red', markersize=12, 
+                        markeredgecolor='black', markeredgewidth=1)
+            except Exception as e:
+                print(f"Error drawing center marker: {e}")
 
         # --- TITLE ---
         if title:

@@ -19,6 +19,12 @@ export const elements = {
     get gridToggle() { return document.getElementById('gridToggle'); },
     get beamToggle() { return document.getElementById('beamToggle'); },
 
+    // New: Center Marker
+    get centerToggle() { return document.getElementById('centerToggle'); },
+    get centerXInput() { return document.getElementById('centerX'); },
+    get centerYInput() { return document.getElementById('centerY'); },
+    get centerInputsContainer() { return document.getElementById('centerInputsContainer'); },
+
     // Stepper Buttons
     get btnStartUp() { return document.getElementById('btnStartUp'); },
     get btnStartDown() { return document.getElementById('btnStartDown'); },

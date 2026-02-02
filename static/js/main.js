@@ -14,13 +14,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = elements.plotTitleInput ? elements.plotTitleInput.value : '';
         const showGrid = elements.gridToggle ? elements.gridToggle.checked : false;
         const showBeam = elements.beamToggle ? elements.beamToggle.checked : false;
+        const showCenter = elements.centerToggle ? elements.centerToggle.checked : false;
+        const centerX = elements.centerXInput ? elements.centerXInput.value : '';
+        const centerY = elements.centerYInput ? elements.centerYInput.value : '';
 
         try {
             const data = await api.fetchRender({
                 channel: index,
                 title: title,
                 grid: showGrid,
-                showBeam: showBeam
+                showBeam: showBeam,
+                showCenter: showCenter,
+                centerX: centerX,
+                centerY: centerY
             });
 
             if (data.image) {
@@ -61,7 +67,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Sliders (Drag)
+    // 4. Center Toggle
+    if (elements.centerToggle) {
+        elements.centerToggle.addEventListener('change', () => {
+            const active = elements.centerToggle.checked;
+            elements.centerXInput.disabled = !active;
+            elements.centerYInput.disabled = !active;
+
+            if (active) {
+                elements.centerInputsContainer.classList.add('active');
+            } else {
+                elements.centerInputsContainer.classList.remove('active');
+            }
+
+            renderChannel(state.lastRenderedChannel);
+        });
+    }
+
+    // 5. Center Inputs
+    if (elements.centerXInput) {
+        elements.centerXInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+        elements.centerYInput.addEventListener('change', () => renderChannel(state.lastRenderedChannel));
+    }
+
+    // 6. Sliders (Drag)
     if (elements.sliderStart && elements.sliderEnd) {
         elements.sliderStart.addEventListener('input', function () {
             slider.updateSliderUI();

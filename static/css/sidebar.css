@@ -1,10 +1,10 @@
 /* Sidebar Container */
 .sidebar {
     width: 250px;
-    background-color: #34495e; 
-    color: white; 
+    background-color: #34495e;
+    color: white;
     padding: 20px;
-    display: flex; 
+    display: flex;
     flex-direction: column;
     gap: 20px;
     border-right: 1px solid #2c3e50;
@@ -24,6 +24,39 @@
     color: #bdc3c7;
 }
 
+.center-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.center-inputs {
+    display: flex;
+    gap: 5px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.center-inputs.active {
+    opacity: 1;
+}
+
+.center-inputs input {
+    width: 45px;
+    background: #2c3e50;
+    border: 1px solid #566573;
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.center-inputs input:disabled {
+    cursor: not-allowed;
+    background: #1a252f;
+}
+
 /* Sidebar Text Inputs */
 .sidebar-group input[type="text"] {
     background: #2c3e50;
@@ -33,6 +66,7 @@
     border-radius: 4px;
     font-size: 13px;
 }
+
 .sidebar-group input[type="text"]:focus {
     outline: none;
     border-color: #3498db;
@@ -47,8 +81,9 @@
     font-size: 13px;
     color: #ecf0f1;
     user-select: none;
-    font-weight: normal; 
+    font-weight: normal;
 }
+
 .checkbox-container input {
     cursor: pointer;
 }

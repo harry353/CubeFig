@@ -35,12 +35,17 @@ def render_channel():
     title = req_data.get('title', '')
     grid = req_data.get('grid', False)
     show_beam = req_data.get('showBeam', False)
+    show_center = req_data.get('showCenter', False)
+    center_x = req_data.get('centerX')
+    center_y = req_data.get('centerY')
 
     image_slice = state.get_slice(channel_idx)
     
-    # Pass title, grid, and beam to plotter
+    # Pass title, grid, beam, and center to plotter
     img_base64 = create_plot(image_slice, state.wcs, state.unit, 
-                             title=title, grid=grid, beam=state.beam, show_beam=show_beam)
+                             title=title, grid=grid, beam=state.beam, 
+                             show_beam=show_beam, show_center=show_center,
+                             center_x=center_x, center_y=center_y)
     
     return jsonify({'image': img_base64})
 
