@@ -59,7 +59,7 @@ def compute_moments_python(subset, v, v_unit, bunit, requested_moments):
 
     return results
 
-def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
+def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments, mask=None, invert_mask=False):
     """
     Calculates moments 0, 1, and 2 for the specified channel range.
     Uses C accelerator if available.
@@ -75,6 +75,20 @@ def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
         return {}
 
     subset = data[start:end, :, :]
+    
+    # Apply mask if it exists
+    if mask is not None:
+        mask_subset = mask[start:end, :, :]
+        if invert_mask:
+            keep = np.logical_or(mask_subset <= 0, np.isnan(mask_subset))
+        else:
+            keep = np.where(mask_subset > 0, True, False)
+        subset = np.where(keep, subset, np.nan)
+        
+        print(f"DEBUG: compute_moments - Invert={invert_mask}")
+        print(f"DEBUG: subset shape: {subset.shape}")
+        print(f"DEBUG: subset finite count: {np.sum(np.isfinite(subset))}")
+        print(f"DEBUG: subset min/max: {np.nanmin(subset)} / {np.nanmax(subset)}")
     
     # Get spectral axis
     try:
@@ -107,6 +121,10 @@ def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
         # Prepare arrays for C (must be contiguous and type float32)
         # We need to make sure 'subset' is float32 and contiguous
         subset_c = np.ascontiguousarray(subset, dtype=np.float32)
+        
+        # Sanitize NaNs to 0.0 for C processing
+        np.nan_to_num(subset_c, copy=False, nan=0.0)
+        
         v_c = np.ascontiguousarray(v, dtype=np.float32)
 
         # Allocate output arrays
@@ -131,12 +149,19 @@ def compute_moments(data, wcs, bunit, start_chan, end_chan, requested_moments):
             if '0' in requested_moments:
                 results['0'] = m0
                 results['0_unit'] = f"{bunit} {v_unit}"
+                print(f"DEBUG: Mom0 finite count: {np.sum(np.isfinite(m0))}")
+                print(f"DEBUG: Mom0 min/max: {np.nanmin(m0)} / {np.nanmax(m0)}")
+
             if '1' in requested_moments:
                 results['1'] = m1
                 results['1_unit'] = v_unit
+                print(f"DEBUG: Mom1 finite count: {np.sum(np.isfinite(m1))}")
+
             if '2' in requested_moments:
                 results['2'] = m2
                 results['2_unit'] = v_unit
+                print(f"DEBUG: Mom2 finite count: {np.sum(np.isfinite(m2))}")
+
             return results
         except Exception as e:
             print(f"ERROR: C moment calculation failed, falling back: {e}")

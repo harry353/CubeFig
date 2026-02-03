@@ -1,6 +1,6 @@
 /* Sidebar Container */
 .sidebar {
-    width: 250px;
+    width: 300px;
     background-color: #34495e;
     color: white;
     padding: 20px;
@@ -9,6 +9,24 @@
     gap: 20px;
     border-right: 1px solid #2c3e50;
     flex-shrink: 0;
+    overflow-y: auto;
+
+    /* Discrete Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #2c3e50 #34495e;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #34495e;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #2c3e50;
+    border-radius: 3px;
 }
 
 /* Sidebar Groups */
@@ -16,6 +34,27 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.dimension-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dimension-inputs input {
+    width: 60px !important;
+    background-color: #2c3e50;
+    border: 1px solid #7f8c8d;
+    color: white;
+    border-radius: 4px;
+    padding: 4px;
+    text-align: center;
+}
+
+.dimension-inputs span {
+    color: #bdc3c7;
+    font-size: 14px;
 }
 
 .sidebar-group label {

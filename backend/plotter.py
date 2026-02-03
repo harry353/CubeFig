@@ -25,13 +25,16 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
                 show_center=False, center_x=None, center_y=None,
                 show_physical=False, distance_val=None, distance_unit='Mpc',
                 norm_global=False, global_min=None, global_max=None,
-                cbar_unit='None', show_offset=False, offset_angle_unit='arcsec'):
+                user_vmin=None, user_vmax=None,
+                cbar_unit='None', show_offset=False, offset_angle_unit='arcsec',
+                fig_width=8, fig_height=8, cbar_label=None,
+                fmt='png', return_base64=True):
     try:
         # --- DEBUG PRINT ---
         print(f"DEBUG: Grid Requested = {grid}")
         
         wcs_2d = wcs.celestial
-        fig = plt.figure(figsize=(8, 8))
+        fig = plt.figure(figsize=(fig_width, fig_height))
 
         if show_offset and center_x is not None and center_y is not None:
             # Shift WCS to be a relative offset from center
@@ -96,11 +99,31 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         final_unit_label = f"{unit_prefix}{unit_label}"
 
         # Plot Data
+        # Plot Data
+        # Determine Default Scaling (Base)
+        # Priority: Global Normalization > ZScale (Auto)
         if norm_global and scaled_min is not None and scaled_max is not None:
-            vmin, vmax = scaled_min, scaled_max
+             vmin, vmax = scaled_min, scaled_max
         else:
-            interval = ZScaleInterval()
-            vmin, vmax = interval.get_limits(plot_data)
+            # ZScale Fallback
+            if np.any(np.isfinite(plot_data)):
+                interval = ZScaleInterval()
+                vmin, vmax = interval.get_limits(plot_data)
+            else:
+                vmin, vmax = 0, 1 # Default for empty/NaN data
+
+        # Apply User Overrides (Partial or Full)
+        if user_vmin is not None and str(user_vmin).strip() != "":
+            try:
+                vmin = float(user_vmin)
+            except ValueError:
+                pass
+                
+        if user_vmax is not None and str(user_vmax).strip() != "":
+            try:
+                vmax = float(user_vmax)
+            except ValueError:
+                pass
             
         im = ax.imshow(plot_data, origin='lower', cmap='viridis', vmin=vmin, vmax=vmax)
         
@@ -157,15 +180,19 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         cax.tick_params(axis='y', which='both', left=False, right=True)
         if not (final_unit_label.startswith('[') and final_unit_label.endswith(']')):
             final_unit_label = f"[{final_unit_label}]"
-        cbar.set_label(f'Intensity {final_unit_label}', rotation=270, labelpad=20)
+        cbar.set_label(f'{cbar_label} {final_unit_label}', rotation=270, labelpad=20)
 
         # Save
+        # Save
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight', pad_inches=0.5)
+        plt.savefig(buf, format=fmt, dpi=150, bbox_inches='tight', pad_inches=0.5)
         buf.seek(0)
         plt.close(fig)
 
-        return base64.b64encode(buf.getvalue()).decode('utf-8')
+        if return_base64:
+            return base64.b64encode(buf.getvalue()).decode('utf-8')
+        else:
+            return buf
 
     except Exception as e:
         print(f"Plotting Error: {e}")

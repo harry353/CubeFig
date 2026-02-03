@@ -4,6 +4,9 @@ export const elements = {
     // We use 'get' functions so it looks for the element freshly every time we ask for it
     get fileInput() { return document.getElementById('fileInput'); },
     get fileNameLabel() { return document.getElementById('fileNameLabel'); },
+    get maskInput() { return document.getElementById('maskInput'); },
+    get maskNameLabel() { return document.getElementById('maskNameLabel'); },
+    get invertMask() { return document.getElementById('invertMask'); },
     get sliderContainer() { return document.getElementById('sliderContainer'); },
     get imgElement() { return document.getElementById('fits-image'); },
     get spinner() { return document.getElementById('loadingSpinner'); },
@@ -17,6 +20,8 @@ export const elements = {
 
     // Sidebar
     get plotTitleInput() { return document.getElementById('plotTitleInput'); },
+    get figWidthInput() { return document.getElementById('figWidthInput'); },
+    get figHeightInput() { return document.getElementById('figHeightInput'); },
     get gridToggle() { return document.getElementById('gridToggle'); },
     get beamToggle() { return document.getElementById('beamToggle'); },
     get normGlobalToggle() { return document.getElementById('normGlobalToggle'); },
@@ -24,6 +29,8 @@ export const elements = {
 
     // Center Marker
     get centerToggle() { return document.getElementById('centerToggle'); },
+    get vminInput() { return document.getElementById('vminInput'); },
+    get vmaxInput() { return document.getElementById('vmaxInput'); },
     get offsetToggle() { return document.getElementById('offsetToggle'); },
     get offsetUnit() { return document.getElementById('offsetUnit'); },
     get centerXInput() { return document.getElementById('centerX'); },
@@ -46,5 +53,8 @@ export const elements = {
     get mom1Toggle() { return document.getElementById('mom1Toggle'); },
     get mom2Toggle() { return document.getElementById('mom2Toggle'); },
     get calculateMomentsBtn() { return document.getElementById('calculateMomentsBtn'); },
-    get tabItems() { return document.querySelectorAll('.tab-item'); }
+    get tabItems() { return document.querySelectorAll('.tab-item'); },
+
+    // Export
+    get exportLinks() { return document.querySelectorAll('.dropdown-content a'); }
 };

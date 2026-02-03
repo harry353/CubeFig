@@ -12,6 +12,8 @@ class FitsState:
         self.header = None
         self.wcs = None
         self.filename = None
+        self.mask = None
+        self.mask_filename = None
         self.unit = "Arbitrary Units"
         self.global_min = None
         self.global_max = None
@@ -34,6 +36,65 @@ class FitsState:
         try:
             hdul = fits.open(path)
             return self._process_hdul(hdul, os.path.basename(path))
+        except Exception as e:
+            return {"error": str(e)}
+
+    def load_mask(self, file_storage):
+        """
+        Reads mask from a Flask FileStorage object.
+        """
+        try:
+            hdul = fits.open(file_storage.stream)
+            return self._process_mask(hdul, file_storage.filename)
+        except Exception as e:
+            return {"error": str(e)}
+
+    def load_mask_from_path(self, path):
+        """
+        Reads mask from a local file path.
+        """
+        try:
+            hdul = fits.open(path)
+            return self._process_mask(hdul, os.path.basename(path))
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _process_mask(self, hdul, filename):
+        try:
+            if self.data is None:
+                raise ValueError("Load a data cube before loading a mask.")
+
+            mask_data = hdul[0].data
+            if mask_data is None and len(hdul) > 1:
+                mask_data = hdul[1].data
+
+            mask_data = np.squeeze(mask_data)
+
+            # Support 2D mask for 3D cube (broadcast spatially)
+            if mask_data.ndim == 2:
+                if mask_data.shape != self.data.shape[-2:]:
+                    raise ValueError(f"2D Mask shape {mask_data.shape} does not match data spatial shape {self.data.shape[-2:]}.")
+                # Broadcast up to 3D
+                mask_data = np.repeat(mask_data[np.newaxis, :, :], self.data.shape[0], axis=0)
+            elif mask_data.ndim == 3:
+                if mask_data.shape != self.data.shape:
+                    raise ValueError(f"3D Mask shape {mask_data.shape} does not match data shape {self.data.shape}.")
+            else:
+                raise ValueError(f"Mask must be 2D or 3D. Got {mask_data.ndim}D.")
+
+            self.mask = mask_data
+            self.mask_filename = filename
+            
+            print(f"DEBUG: Mask processed from {filename}")
+            print(f"DEBUG: Final Mask shape: {self.mask.shape}")
+            finite_mask = self.mask[np.isfinite(self.mask)]
+            if finite_mask.size > 0:
+                print(f"DEBUG: Mask Min/Max/Mean: {np.min(finite_mask)} / {np.max(finite_mask)} / {np.mean(finite_mask)}")
+                print(f"DEBUG: Non-zero mask pixels: {np.count_nonzero(self.mask)}")
+            else:
+                print("DEBUG: Mask is entirely NaN!")
+
+            return {"success": True, "filename": filename}
         except Exception as e:
             return {"error": str(e)}
 

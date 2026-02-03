@@ -7,6 +7,14 @@ export async function fetchUpload(file) {
     return await response.json();
 }
 
+export async function fetchMaskUpload(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/upload_mask', { method: 'POST', body: formData });
+    return await response.json();
+}
+
 export async function fetchRenderMoment(payload) {
     const response = await fetch('/render_moment', {
         method: 'POST',

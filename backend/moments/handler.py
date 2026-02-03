@@ -26,28 +26,47 @@ def handle_moment_calculation(state, req_data):
     cbar_unit = req_data.get('cbarUnit', 'None')
     show_offset = req_data.get('showOffset', False)
     offset_angle_unit = req_data.get('offsetAngleUnit', 'arcsec')
+    fig_width = float(req_data.get('figWidth', 8))
+    fig_height = float(req_data.get('figHeight', 8))
+    invert_mask = req_data.get('invertMask', False)
 
     # Step 1: Calculate raw moment data
-    results = compute_moments(state.data, state.wcs, state.unit, start_chan, end_chan, requested_moments)
+    results = compute_moments(state.data, state.wcs, state.unit, start_chan, end_chan, requested_moments, mask=state.mask, invert_mask=invert_mask)
     
     # Step 2: Render results to base64 images
     images = {}
     for mom in requested_moments:
         if mom in results:
             mom_data = results[mom]
-            mom_unit = results.get(f"{mom}_unit", "Arbitrary Units")
-            
-            # Formatting title
-            mom_title = f"{title}\nMoment {mom}" if title else f"Moment {mom}"
+            raw_unit = results.get(f"{mom}_unit", "Arbitrary Units")
             
             # Store raw data for future interactive re-renders
             state.moment_data[mom] = {
                 'data': mom_data,
-                'unit': mom_unit
+                'unit': raw_unit
             }
 
+            # Formatting title
+            mom_title = f"{title}\nMoment {mom}" if title else f"Moment {mom}"
+
+            # Dimensions
+            fig_width = float(req_data.get('figWidth', 8))
+            fig_height = float(req_data.get('figHeight', 8))
+
+            # Custom Label for Colorbar
+            # Custom Label for Colorbar
+            cbar_label = "Intensity"
+            if mom == '1':
+                cbar_label = "Velocity Field"
+            elif mom == '2':
+                cbar_label = "Velocity Dispersion"
+            
+            # Extract Manual Vmin/Vmax
+            user_vmin = req_data.get('vmin')
+            user_vmax = req_data.get('vmax')
+
             img_base64 = create_plot(
-                mom_data, state.wcs, mom_unit, 
+                mom_data, state.wcs, raw_unit, 
                 title=mom_title, grid=grid, beam=state.beam, 
                 show_beam=show_beam, show_center=show_center,
                 center_x=center_x, center_y=center_y,
@@ -55,7 +74,10 @@ def handle_moment_calculation(state, req_data):
                 distance_unit=distance_unit,
                 cbar_unit=cbar_unit,
                 show_offset=show_offset,
-                offset_angle_unit=offset_angle_unit
+                offset_angle_unit=offset_angle_unit,
+                fig_width=fig_width, fig_height=fig_height,
+                cbar_label=cbar_label,
+                user_vmin=user_vmin, user_vmax=user_vmax
             )
             images[mom] = img_base64
             

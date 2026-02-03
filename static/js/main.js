@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const c = window.INITIAL_CONFIG;
         if (elements.plotTitleInput) elements.plotTitleInput.value = c.title || '';
         if (elements.gridToggle) elements.gridToggle.checked = !!c.grid;
+        if (elements.figWidthInput) elements.figWidthInput.value = c.figWidth || 8;
+        if (elements.figHeightInput) elements.figHeightInput.value = c.figHeight || 8;
         if (elements.beamToggle) elements.beamToggle.checked = !!c.showBeam;
         if (elements.centerToggle) {
             elements.centerToggle.checked = !!c.showCenter;
@@ -37,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.fileNameLabel && c.filename) {
             elements.fileNameLabel.textContent = c.filename;
         }
+        if (elements.maskNameLabel && c.mask_filename) {
+            elements.maskNameLabel.textContent = c.mask_filename;
+        }
+
+        if (elements.vminInput) elements.vminInput.value = c.vmin || '';
+        if (elements.vmaxInput) elements.vmaxInput.value = c.vmax || '';
 
         initializeUI();
     }
@@ -79,6 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.fileNameLabel && data.filename) {
             elements.fileNameLabel.textContent = data.filename;
         }
+        if (elements.maskNameLabel && data.mask_filename) {
+            elements.maskNameLabel.textContent = data.mask_filename;
+        }
 
         // Clear moments from previous file
         state.momentImages = {};
@@ -98,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             channel: slider.getSliderValues ? slider.getSliderValues().start : 0,
             title: elements.plotTitleInput ? elements.plotTitleInput.value : '',
+            figWidth: elements.figWidthInput ? elements.figWidthInput.value : 8,
+            figHeight: elements.figHeightInput ? elements.figHeightInput.value : 8,
             grid: elements.gridToggle ? elements.gridToggle.checked : false,
             showBeam: elements.beamToggle ? elements.beamToggle.checked : false,
             showCenter: elements.centerToggle ? elements.centerToggle.checked : false,
@@ -109,7 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
             distanceVal: elements.distanceInput ? elements.distanceInput.value : '',
             distanceUnit: elements.distanceUnit ? elements.distanceUnit.value : 'Mpc',
             normGlobal: elements.normGlobalToggle ? elements.normGlobalToggle.checked : false,
-            cbarUnit: elements.cbarUnit ? elements.cbarUnit.value : 'None'
+            vmin: elements.vminInput ? elements.vminInput.value : '',
+            vmax: elements.vmaxInput ? elements.vmaxInput.value : '',
+            cbarUnit: elements.cbarUnit ? elements.cbarUnit.value : 'None',
+            invertMask: elements.invertMask ? elements.invertMask.checked : false
         };
     }
 
@@ -125,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         slider.updateSliderUI(); // Refresh the visual slider
 
         if (elements.plotTitleInput) elements.plotTitleInput.value = s.title;
+        if (elements.figWidthInput) elements.figWidthInput.value = s.figWidth;
+        if (elements.figHeightInput) elements.figHeightInput.value = s.figHeight;
         if (elements.gridToggle) elements.gridToggle.checked = s.grid;
         if (elements.beamToggle) elements.beamToggle.checked = s.showBeam;
         if (elements.centerToggle) {
@@ -144,8 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elements.distanceInput) elements.distanceInput.value = s.distanceVal;
         if (elements.distanceUnit) elements.distanceUnit.value = s.distanceUnit;
-        if (elements.normGlobalToggle) elements.normGlobalToggle.checked = s.normGlobal;
+        if (elements.distanceInput) elements.distanceInput.value = s.distanceVal;
+        if (elements.distanceUnit) elements.distanceUnit.value = s.distanceUnit;
+        if (elements.normGlobalToggle) {
+            elements.normGlobalToggle.checked = s.normGlobal;
+            // Update input state (disabled if normGlobal is true)
+            if (elements.vminInput) elements.vminInput.disabled = !!s.normGlobal;
+            if (elements.vmaxInput) elements.vmaxInput.disabled = !!s.normGlobal;
+        }
+        if (elements.vminInput) elements.vminInput.value = s.vmin;
+        if (elements.vmaxInput) elements.vmaxInput.value = s.vmax;
         if (elements.cbarUnit) elements.cbarUnit.value = s.cbarUnit;
+        if (elements.invertMask) elements.invertMask.checked = !!s.invertMask;
 
         state.isSyncing = false;
     }
@@ -250,9 +278,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 1b. Mask Upload
+    if (elements.maskInput) {
+        elements.maskInput.addEventListener('change', () => {
+            if (elements.maskInput.files.length > 0) {
+                if (elements.maskNameLabel) {
+                    elements.maskNameLabel.textContent = elements.maskInput.files[0].name;
+                }
+                handleMaskUpload();
+            }
+        });
+    }
+
+    // 1c. Invert Mask Toggle
+    if (elements.invertMask) {
+        elements.invertMask.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+    }
+
     // 2. Title Input
     if (elements.plotTitleInput) {
         elements.plotTitleInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+    }
+
+    if (elements.figWidthInput) {
+        elements.figWidthInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+    }
+
+    if (elements.figHeightInput) {
+        elements.figHeightInput.addEventListener('change', () => {
             updateStateFromUI();
             renderView(state.lastRenderedChannel);
         });
@@ -277,6 +339,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Normalization Toggle
     if (elements.normGlobalToggle) {
         elements.normGlobalToggle.addEventListener('change', () => {
+            const isChecked = elements.normGlobalToggle.checked;
+            if (elements.vminInput) elements.vminInput.disabled = isChecked;
+            if (elements.vmaxInput) elements.vmaxInput.disabled = isChecked;
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+    }
+
+    // Manual Scale Inputs
+    if (elements.vminInput) {
+        elements.vminInput.addEventListener('change', () => {
+            updateStateFromUI();
+            renderView(state.lastRenderedChannel);
+        });
+    }
+    if (elements.vmaxInput) {
+        elements.vmaxInput.addEventListener('change', () => {
             updateStateFromUI();
             renderView(state.lastRenderedChannel);
         });
@@ -538,6 +617,98 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Upload Error:', error);
             alert("Upload failed. Check console for details.");
+        } finally {
+            elements.spinner.style.display = 'none';
+        }
+    }
+
+    async function handleMaskUpload() {
+        const file = elements.maskInput.files[0];
+        if (!file) return;
+
+        elements.spinner.style.display = 'block';
+
+        try {
+            const data = await api.fetchMaskUpload(file);
+
+            if (data.error) {
+                alert("Error loading mask: " + data.error);
+                if (elements.maskNameLabel) {
+                    elements.maskNameLabel.textContent = "Error loading mask";
+                }
+            } else if (data.success) {
+                // If we are on the cube view, re-render to show the effect
+                if (state.activeTab === 'cube') {
+                    renderView(state.lastRenderedChannel);
+                }
+                // Notify user to recalculate moments if they want them masked
+            }
+        } catch (error) {
+            console.error('Mask Upload Error:', error);
+            alert("Mask upload failed.");
+        } finally {
+            elements.spinner.style.display = 'none';
+        }
+    }
+
+    // 9. Export
+    if (elements.exportLinks) {
+        elements.exportLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const fmt = link.dataset.fmt;
+                handleExport(fmt);
+            });
+        });
+    }
+
+    async function handleExport(fmt) {
+        elements.spinner.style.display = 'block';
+        try {
+            const params = getRenderParams();
+            const payload = { ...params, format: fmt };
+
+            // Add context (Channel or Moment)
+            if (state.activeTab === 'cube') {
+                payload.channel = state.lastRenderedChannel || 0;
+            } else {
+                payload.momentType = state.activeTab.replace('mom', '');
+            }
+
+            const response = await fetch('/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                let filename = 'plot';
+                if (params.title && params.title.trim() !== '') {
+                    filename = params.title.toLowerCase().replace(/[()]/g, '').replace(/\s+/g, '_');
+                }
+
+                if (state.activeTab !== 'cube') {
+                    const momType = state.activeTab.replace('mom', '');
+                    filename += `_moment_${momType}`;
+                }
+
+                a.download = `${filename}.${fmt}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                const data = await response.json();
+                alert("Export Failed: " + (data.error || "Unknown Error"));
+            }
+        } catch (err) {
+            console.error("Export Error:", err);
+            alert("Export Failed.");
         } finally {
             elements.spinner.style.display = 'none';
         }

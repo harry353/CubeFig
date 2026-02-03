@@ -22,9 +22,20 @@
 
     <header>
         <div class="control-group">
-            <label for="fileInput" class="custom-file-upload">Choose File</label>
+            <label for="fileInput" class="custom-file-upload">Choose Cube</label>
             <input type="file" id="fileInput" accept=".fits,.fit">
             <span id="fileNameLabel">No file chosen</span>
+        </div>
+
+        <div class="control-group">
+            <label for="maskInput" class="custom-file-upload">Choose Mask</label>
+            <input type="file" id="maskInput" accept=".fits,.fit">
+            <span id="maskNameLabel">No mask chosen</span>
+            <div class="mask-options" style="display: flex; align-items: center; gap: 10px; margin-left: 10px;">
+                <label class="checkbox-container" style="margin: 0; font-size: 0.8em; color: #bdc3c7;">
+                    <input type="checkbox" id="invertMask"> Invert
+                </label>
+            </div>
         </div>
 
         <div class="slider-wrapper" id="sliderContainer">
@@ -54,6 +65,16 @@
                 <input type="range" id="sliderEnd" min="0" max="100" value="0" step="1">
             </div>
         </div>
+        <div class="control-group" style="margin-left: auto;">
+            <div class="export-dropdown">
+                <button class="custom-file-upload export-btn">Export ▼</button>
+                <div class="dropdown-content">
+                    <a href="#" data-fmt="png">PNG</a>
+                    <a href="#" data-fmt="svg">SVG</a>
+                    <a href="#" data-fmt="pdf">PDF</a>
+                </div>
+            </div>
+        </div>
     </header>
 
     <div class="main-container">
@@ -62,6 +83,15 @@
             <div class="sidebar-group">
                 <label for="plotTitleInput">Plot Title (LaTeX supported)</label>
                 <input type="text" id="plotTitleInput" placeholder="e.g. Velocity Map $v_{rot}$">
+            </div>
+
+            <div class="sidebar-group">
+                <label>Dimensions (W x H [in])</label>
+                <div class="dimension-inputs">
+                    <input type="number" id="figWidthInput" value="8" step="0.1" min="1">
+                    <span>×</span>
+                    <input type="number" id="figHeightInput" value="8" step="0.1" min="1">
+                </div>
             </div>
 
             <div class="sidebar-group">
@@ -79,26 +109,42 @@
             </div>
 
             <div class="sidebar-group">
-                <label class="checkbox-container">
-                    <input type="checkbox" id="normGlobalToggle">
-                    Normalize Channel Values
-                </label>
-            </div>
+                <div class="center-control-wrapper">
+                    <label class="sidebar-label" style="font-weight: 600; color: #ecf0f1; margin-bottom: 5px;">Intensity
+                        Scaling</label>
 
-            <div class="sidebar-group">
-                <div class="cbar-unit-control">
-                    <label for="cbarUnit">Colorbar Units</label>
-                    <select id="cbarUnit">
-                        <option value="None">None</option>
-                        <option value="milli">milli</option>
-                        <option value="micro">micro</option>
-                        <option value="nano">nano</option>
-                    </select>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="normGlobalToggle">
+                        Normalize Channel Values
+                    </label>
+
+                    <div class="cbar-unit-control">
+                        <label for="cbarUnit">Colorbar Units</label>
+                        <select id="cbarUnit">
+                            <option value="None">None</option>
+                            <option value="milli">milli</option>
+                            <option value="micro">micro</option>
+                            <option value="nano">nano</option>
+                        </select>
+                    </div>
+
+                    <div class="nested-control">
+                        <div class="physical-main-row">
+                            <span class="sidebar-label">Manual Scale</span>
+                        </div>
+                        <div class="dimension-inputs">
+                            <input type="number" id="vminInput" placeholder="Min" step="any" disabled>
+                            <span>-</span>
+                            <input type="number" id="vmaxInput" placeholder="Max" step="any" disabled>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="sidebar-group">
                 <div class="center-control-wrapper">
+                    <label class="sidebar-label" style="font-weight: 600; color: #ecf0f1; margin-bottom: 5px;">Center &
+                        Coordinates</label>
                     <div class="center-control">
                         <label class="checkbox-container">
                             <input type="checkbox" id="centerToggle">
@@ -152,10 +198,10 @@
                                 <input type="checkbox" id="mom0Toggle"> Moment 0 (Intensity)
                             </label>
                             <label class="checkbox-container">
-                                <input type="checkbox" id="mom1Toggle"> Moment 1 (Velocity)
+                                <input type="checkbox" id="mom1Toggle"> Moment 1 (Velocity Field)
                             </label>
                             <label class="checkbox-container">
-                                <input type="checkbox" id="mom2Toggle"> Moment 2 (Dispersion)
+                                <input type="checkbox" id="mom2Toggle"> Moment 2 (Velocity Dispersion)
                             </label>
                         </div>
                         <button id="calculateMomentsBtn" class="calculate-btn">Calculate Maps</button>
