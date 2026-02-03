@@ -10,7 +10,7 @@ def parse_arguments():
     
     # Plot configuration
     parser.add_argument('--title', type=str, default='', help='Default plot title')
-    parser.add_argument('--show-grid', action='store_true', help='Enable grid by default')
+    parser.add_argument('--show-grid', '--grid', action='store_true', dest='show_grid', help='Enable grid by default')
     parser.add_argument('--show-beam', action='store_true', help='Show beam by default')
     parser.add_argument('--show-center', action='store_true', help='Show center by default')
     parser.add_argument('--center-coords', type=float, nargs=2, help='Initial center coordinates (X Y)')

@@ -36,7 +36,17 @@ python app.py [arguments]
 
 Example:
 ```bash
-python app.py --file NGC1068_torus_CO32.fits --mask NGC1068_torus_CO32_mask.fits --title "NGC 1068 Torus" --show-physical --target-distance 14.4e6 --offset-unit pc
+python app.py \
+  --file examples/NGC1068_torus_CO32.fits \
+  --mask examples/NGC1068_torus_CO32_mask.fits \
+  --title "NGC 1068 Torus (CO 3-2)" \
+  --grid \
+  --show-beam \
+  --show-center \
+  --center-coords 83 66 \
+  --show-physical \
+  --target-distance 14.4e6 \
+  --offset-unit pc
 ```
 
 ## Gallery

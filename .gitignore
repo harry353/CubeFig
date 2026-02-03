@@ -1,3 +1,3 @@
 *.fits
-!NGC1068_torus_CO32.fits
-!NGC1068_torus_CO32_mask.fits
+!examples/NGC1068_torus_CO32.fits
+!examples/NGC1068_torus_CO32_mask.fits
