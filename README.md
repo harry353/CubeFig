@@ -1,4 +1,6 @@
-<img src="cubefig_project_logo.png" width="400">
+<p align="center">
+  <img src="cubefig_project_logo.png" width="400">
+</p>
 
 # CubeFig - Publication-Ready Moment Maps in Seconds
 
