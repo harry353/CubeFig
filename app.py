@@ -40,7 +40,7 @@ if args.file:
 if args.mask:
     print(f"Loading initial mask: {args.mask}")
     try:
-        state._process_mask(args.mask)
+        state.load_mask_from_path(args.mask)
     except Exception as e:
         print(f"Error loading initial mask: {e}")
 
@@ -80,9 +80,52 @@ def get_status():
             'is_loaded': True,
             'filename': state.filename,
             'mask_filename': state.mask_filename,
+            'file_path': state.file_path,
+            'mask_path': state.mask_path,
             'channels': state.data.shape[0]
         })
     return jsonify({'is_loaded': False})
+
+@app.route('/load_from_path', methods=['POST'])
+def load_from_path_route():
+    req_data = request.get_json()
+    file_path = req_data.get('file_path')
+    mask_path = req_data.get('mask_path')
+    mask_filename = req_data.get('mask_filename')
+
+    if not file_path:
+        return jsonify({'error': 'No file path provided'}), 400
+
+    result = state.load_fits_from_path(file_path)
+    if "error" in result:
+        return jsonify(result), 500
+
+    # Try to load mask
+    target_mask_path = mask_path
+    
+    # If no explicit mask path, try to resolve relative to file_path
+    if not target_mask_path and mask_filename:
+        import os
+        possible_path = os.path.join(os.path.dirname(file_path), mask_filename)
+        if os.path.exists(possible_path):
+            target_mask_path = possible_path
+            print(f"DEBUG: Resolved mask '{mask_filename}' to '{target_mask_path}'")
+
+    if target_mask_path:
+        mask_result = state.load_mask_from_path(target_mask_path)
+        if "error" in mask_result:
+             # Just warn, don't fail the whole load
+            print(f"Warning: Failed to load mask from path {target_mask_path}: {mask_result['error']}")
+
+    # Refresh status to get updated paths/filenames
+    return jsonify({
+        'success': True,
+        'filename': state.filename,
+        'file_path': state.file_path,
+        'mask_filename': state.mask_filename,
+        'mask_path': state.mask_path,
+        'channels': state.data.shape[0] if state.data is not None else 0
+    })
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

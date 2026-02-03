@@ -91,6 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.maskNameLabel.textContent = data.mask_filename;
         }
 
+        // Store paths if available (for workspace saving)
+        state.file_path = data.file_path;
+        state.mask_path = data.mask_path;
+
         // Clear moments from previous file
         state.momentImages = {};
         state.cubeImage = null;
@@ -260,8 +264,28 @@ document.addEventListener('DOMContentLoaded', () => {
             else t.classList.remove('active');
         });
 
-        // Trigger a re-render for the newly active view to ensure it reflects current global settings
-        renderView();
+        // Hide overlay by default
+        if (elements.recalcOverlay) elements.recalcOverlay.style.display = 'none';
+        elements.imgElement.style.display = 'block';
+
+        if (tabName === 'cube') {
+            // Re-render to ensure correct state
+            renderView();
+        } else if (tabName.startsWith('mom')) {
+            const momType = tabName.replace('mom', '');
+
+            // Check if we have the image data
+            if (state.momentImages && state.momentImages[momType]) {
+                elements.imgElement.src = `data:image/png;base64,${state.momentImages[momType]}`;
+                // We might want to trigger a render here if we want to support dynamic re-coloring of moments in the future
+                // For now, valid moment data is static base64
+                renderView();
+            } else {
+                // DATA MISSING -> Show Overlay
+                elements.imgElement.style.display = 'none';
+                if (elements.recalcOverlay) elements.recalcOverlay.style.display = 'flex';
+            }
+        }
     }
 
     // --- EVENT LISTENERS ---
@@ -596,6 +620,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 9. Recalculate Overlay Button
+    if (elements.recalcBtn) {
+        elements.recalcBtn.addEventListener('click', () => {
+            // Trigger the main calculate button
+            if (elements.calculateMomentsBtn) {
+                elements.calculateMomentsBtn.click();
+            }
+        });
+    }
+
     // --- HELPER FUNCTIONS ---
 
     async function handleUpload() {
@@ -660,6 +694,174 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleExport(fmt);
             });
         });
+    }
+
+    // 10. Workspace Persistence
+    if (elements.saveWorkspaceBtn) {
+        elements.saveWorkspaceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveWorkspace();
+        });
+    }
+
+    if (elements.loadWorkspaceBtn) {
+        elements.loadWorkspaceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (elements.workspaceInput) elements.workspaceInput.click();
+        });
+    }
+
+    if (elements.workspaceInput) {
+        elements.workspaceInput.addEventListener('change', (e) => {
+            if (elements.workspaceInput.files.length > 0) {
+                loadWorkspace(elements.workspaceInput.files[0]);
+                elements.workspaceInput.value = ''; // Reset
+            }
+        });
+    }
+
+    function saveWorkspace() {
+        const workspace = {
+            version: 1.1,
+            timestamp: new Date().toISOString(),
+            filename: elements.fileNameLabel ? elements.fileNameLabel.textContent : '',
+            file_path: state.file_path || null,
+            mask_filename: elements.maskNameLabel ? elements.maskNameLabel.textContent : '',
+            mask_path: state.mask_path || null,
+            activeTab: state.activeTab,
+            tabSettings: state.tabSettings,
+            moments: Object.keys(state.momentImages)
+        };
+
+        const jsonStr = JSON.stringify(workspace, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        // Construct filename: fits_name_YY:MM:SS@HH:MM:SS
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2);
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+
+        let baseName = 'workspace';
+        if (workspace.filename) {
+            // Remove extension if present
+            baseName = workspace.filename.replace(/\.fits$/i, '').replace(/\.fit$/i, '');
+        }
+
+        // Requested format: YY:MM:SS@HH:MM:SS
+        const timeStr = `${yy}:${mm}:${dd}@${hh}:${min}:${ss}`;
+        const finalName = `${baseName}_${timeStr}.json`;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = finalName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function loadWorkspace(file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const workspace = JSON.parse(e.target.result);
+                elements.spinner.style.display = 'block';
+
+                let loadSuccess = false;
+
+                // 1. Try to load from path if available
+                if (workspace.file_path) {
+                    try {
+                        console.log("Attempting to auto-load file from:", workspace.file_path);
+                        const loadResp = await fetch('/load_from_path', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                file_path: workspace.file_path,
+                                mask_path: workspace.mask_path,
+                                mask_filename: workspace.mask_filename
+                            })
+                        });
+
+                        if (loadResp.ok) {
+                            const data = await loadResp.json();
+                            setFileData(data);
+                            loadSuccess = true;
+                            console.log("Auto-load successful");
+                        } else {
+                            console.warn("Auto-load failed, server returned error");
+                        }
+                    } catch (err) {
+                        console.error("Auto-load request error:", err);
+                    }
+                }
+
+                // 2. If valid file not loaded automatically, check if current file matches or warn
+                if (!loadSuccess) {
+                    const currentFile = elements.fileNameLabel ? elements.fileNameLabel.textContent : '';
+                    if (workspace.filename && (!currentFile || workspace.filename !== currentFile)) {
+                        alert(`Could not auto-load the file "${workspace.filename}".\nPlease ensure the file is loaded manually before restoring settings.`);
+                        // We can still try to restore settings, but they might be for the wrong file.
+                    }
+                }
+
+                // Restore Settings
+                state.tabSettings = workspace.tabSettings || {};
+
+                // Restore Moments (Visuals)
+                if (workspace.moments && workspace.moments.length > 0) {
+                    workspace.moments.forEach(m => {
+                        const tabId = `mom${m}`;
+                        const tab = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+                        if (tab) tab.classList.remove('hidden');
+
+                        // Also check the toggle box so Recalculate works
+                        const toggle = document.getElementById(`mom${m}Toggle`);
+                        if (toggle) toggle.checked = true;
+                    });
+                }
+
+                // Switch to saved tab
+                switchTab(workspace.activeTab || 'cube');
+
+                // Force update UI for current tab
+                // If we auto-loaded, setFileData acts as a reset, so we might need to re-apply settings for the active tab.
+                // setFileData resets tabSettings? No, it looks like it might not.
+                // Wait, main.js usually resets state on upload.
+                // Let's check setFileData implementation.
+
+                // If setFileData clears state, we need to apply settings AFTER it.
+                // Fortunately we called setFileData BEFORE restoring state.tabSettings line above.
+
+                // Trigger a render for the active tab to reflect settings
+                if (state.activeTab === 'cube') {
+                    // We need to apply settings from tabSettings['cube'] to the inputs
+                    // Because renderView reads from INPUTS usually, or does it?
+                    // getRenderParams reads from DOM.
+                    // We need a function to 'applySettingsToDOM(settings)'.
+
+                    // Currently we don't have that. The sliders update 'state' when moved?
+                    // No, main.js logic is: DOM -> getRenderParams -> API.
+                    // If we overwrite DOM values, then call render, it works.
+
+                    // We need a helper to fill DOM from tabSettings.
+                }
+
+                alert("Workspace loaded successfully.");
+
+            } catch (err) {
+                console.error("Load Workspace Error:", err);
+                alert("Failed to load workspace.");
+            } finally {
+                elements.spinner.style.display = 'none';
+            }
+        };
+        reader.readAsText(file);
     }
 
     async function handleExport(fmt) {

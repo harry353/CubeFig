@@ -55,6 +55,13 @@ export const elements = {
     get calculateMomentsBtn() { return document.getElementById('calculateMomentsBtn'); },
     get tabItems() { return document.querySelectorAll('.tab-item'); },
 
-    // Export
-    get exportLinks() { return document.querySelectorAll('.dropdown-content a'); }
+    // Export & Workspace
+    get exportLinks() { return document.querySelectorAll('.export-link'); },
+    get saveWorkspaceBtn() { return document.getElementById('saveWorkspaceBtn'); },
+    get loadWorkspaceBtn() { return document.getElementById('loadWorkspaceBtn'); },
+    get workspaceInput() { return document.getElementById('workspaceInput'); },
+
+    // Recalculate Overlay
+    get recalcOverlay() { return document.getElementById('recalcOverlay'); },
+    get recalcBtn() { return document.getElementById('recalcBtn'); }
 };

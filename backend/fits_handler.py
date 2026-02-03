@@ -12,8 +12,10 @@ class FitsState:
         self.header = None
         self.wcs = None
         self.filename = None
+        self.file_path = None # Store generic path
         self.mask = None
         self.mask_filename = None
+        self.mask_path = None # Store generic path
         self.unit = "Arbitrary Units"
         self.global_min = None
         self.global_max = None
@@ -35,6 +37,7 @@ class FitsState:
         """
         try:
             hdul = fits.open(path)
+            self.file_path = os.path.abspath(path)
             return self._process_hdul(hdul, os.path.basename(path))
         except Exception as e:
             return {"error": str(e)}
@@ -55,6 +58,7 @@ class FitsState:
         """
         try:
             hdul = fits.open(path)
+            self.mask_path = os.path.abspath(path)
             return self._process_mask(hdul, os.path.basename(path))
         except Exception as e:
             return {"error": str(e)}

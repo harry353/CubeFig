@@ -67,13 +67,19 @@
         </div>
         <div class="control-group" style="margin-left: auto;">
             <div class="export-dropdown">
-                <button class="custom-file-upload export-btn">Export ▼</button>
+                <button class="custom-file-upload export-btn">Menu ▼</button>
                 <div class="dropdown-content">
-                    <a href="#" data-fmt="png">PNG</a>
-                    <a href="#" data-fmt="svg">SVG</a>
-                    <a href="#" data-fmt="pdf">PDF</a>
+                    <div class="dropdown-header">Workspace</div>
+                    <a href="#" id="saveWorkspaceBtn">Save Workspace</a>
+                    <a href="#" id="loadWorkspaceBtn">Load Workspace</a>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-header">Export Plot</div>
+                    <a href="#" data-fmt="png" class="export-link">PNG Image</a>
+                    <a href="#" data-fmt="svg" class="export-link">SVG Vector</a>
+                    <a href="#" data-fmt="pdf" class="export-link">PDF Document</a>
                 </div>
             </div>
+            <input type="file" id="workspaceInput" accept=".json" style="display: none;">
         </div>
     </header>
 
@@ -219,6 +225,13 @@
             <div class="image-wrapper">
                 <div class="spinner" id="loadingSpinner"></div>
                 <img id="fits-image" src="" alt="FITS Map">
+                <div id="recalcOverlay" class="recalc-overlay" style="display: none;">
+                    <div class="recalc-content">
+                        <p>Moment map data not loaded.</p>
+                        <button id="recalcBtn" class="calculate-btn" style="margin-top: 10px;">Recalculate
+                            Moment</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
