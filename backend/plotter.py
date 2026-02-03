@@ -185,7 +185,7 @@ def create_plot(image_data, wcs, unit_label, title="", grid=False, beam=None, sh
         # Save
         # Save
         buf = io.BytesIO()
-        plt.savefig(buf, format=fmt, dpi=150, bbox_inches='tight', pad_inches=0.5)
+        plt.savefig(buf, format=fmt, dpi=150, bbox_inches='tight', pad_inches=0.05)
         buf.seek(0)
         plt.close(fig)
 
