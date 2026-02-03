@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="cubefig_project_logo.png" width="400">
+  <img src="assets/cubefig_project_logo.png" width="250">
 </p>
 
 # CubeFig - Publication-Ready Moment Maps in Seconds
@@ -58,4 +58,4 @@ python app.py \
 
 ## Gallery
 
-![Moment 0 Map](ngc_1068_torus_co_3-2_moment_0.png)
+![Moment 0 Map](assets/ngc_1068_torus_co_3-2_moment_0.png)
