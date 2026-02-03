@@ -1,3 +1,5 @@
+<img src="cubefig_project_logo.png" width="400">
+
 # CubeFig - Publication-Ready Moment Maps in Seconds
 
 CubeFig is a high-performance interactive tool designed for astronomers to generate **publication-quality moment maps** from spectral cubes with minimal effort. CubeFig streamlines the workflow from FITS cube to final figure, handling physical conversions, masking, and layout automatically.
