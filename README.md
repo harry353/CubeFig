@@ -1,19 +1,22 @@
-# CubeFig2 - Interactive FITS Cube Viewer
+# CubeFig - Publication-Ready Moment Maps in Seconds
 
-CubeFig2 is a web-based interactive viewer for astronomical FITS data, specifically designed for spectral cubes (e.g., radio astronomy data). It allows users to visualize channel maps, apply masks, calculate moment maps, and export publication-ready figures.
+CubeFig is a high-performance interactive tool designed for astronomers to generate **publication-quality moment maps** from spectral cubes with minimal effort. CubeFig streamlines the workflow from FITS cube to final figure, handling physical conversions, masking, and layout automatically.
 
-## Features
+## Why CubeFig?
 
-- **Interactive Cube Navigation**: Scroll through spectral channels with ease.
-- **Moment Calculation**: Compute Moment 0 (Intensity), Moment 1 (Velocity Field), and Moment 2 (Velocity Dispersion) on the fly.
-- **Masking Support**: fast application and inversion of FITS masks.
-- **Physical Axes support**: Visualize data with Physical coordinates (pc/kpc/Mpc) or WCS (RA/Dec).
-- **Customizable Plotting**:
-    - Toggle Grid, Beam, and Center markers.
-    - Adjust Colorbars and Scaling (Min/Max).
-    - Dynamic Colormap normalization.
-- **Workspace Persistence**: Save your current session (loaded files, views, settings) and restore it later.
-- **Publication Export**: Export high-quality plots as PNG, SVG, or PDF.
+- **🚀 Fast Performance**: Powered by a **custom C backend**, CubeFig calculates moments (Intensity, Velocity, Dispersion) efficiently, enabling real-time exploration of large datasets.
+- **📄 Publication Ready**: specific focus on generating figures that are ready for inclusion in journals (PDF/SVG support, proper physical axes, beam ellipses).
+- **⚡ Efficient Workflow**: Load data -> Apply Mask -> Compute Moments -> Export. Done.
+
+## Key Features
+
+- **High-Performance Moment Calculation**: Compute Moment 0, 1, and 2 near-instantly using C extensions.
+- **Interactive Visualization**: Scroll through channel maps and inspect masks in real-time.
+- **Smart Plotting**:
+    - Automatic WCS to Physical coordinate conversion (pc, kpc, Mpc).
+    - Precise control over figure dimensions, margins, and overlays.
+    - Toggleable Beam, Grid, and Colorbar elements.
+- **Session Persistence**: Save your workspace and resume exactly where you left off.
 
 ## Usage
 
@@ -23,18 +26,10 @@ Start the application using:
 python app.py [arguments]
 ```
 
-### Common Arguments:
+### Quick Start Example
 
-- `--file`: Path to FITS file to load initially.
-- `--mask`: Path to FITS mask file.
-- `--title`: Title for the plot.
-- `--show-grid`: Enable grid by default.
-- `--show-beam`: Show beam ellipse.
-- `--show-physical`: Use physical distance axes.
-- `--target-distance`: Distance to object (for physical scale).
-- `--offset-unit`: Unit for physical offset (pc, kpc, Mpc).
+Visualize the NGC 1068 Torus CO(3-2) data:
 
-Example:
 ```bash
 python app.py \
   --file examples/NGC1068_torus_CO32.fits \
@@ -48,6 +43,14 @@ python app.py \
   --target-distance 14.4e6 \
   --offset-unit pc
 ```
+
+### Common Arguments
+
+- `--file`: Path to FITS file to load.
+- `--mask`: Path to FITS mask file.
+- `--show-physical`: Enable physical distance axes.
+- `--target-distance`: Distance to object (required for physical axes).
+- `--fig-width` / `--fig-height`: Set exact figure dimensions in inches.
 
 ## Gallery
 
