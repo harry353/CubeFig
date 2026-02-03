@@ -41,7 +41,7 @@ def draw_physical_axes(ax, wcs_2d, show_physical, show_center,
         ax_top.set_xlabel(rf"$\Delta x$ [{distance_unit}]", labelpad=15)
 
         ax_right = ax.secondary_yaxis("right", functions=(pix2phys_y, phys2pix_y))
-        ax_right.set_ylabel(rf"$\Delta y$ [{distance_unit}]", rotation=270, labelpad=20)
+        ax_right.set_ylabel(rf"$\Delta y$ [{distance_unit}]", rotation=270, labelpad=15)
 
         if hasattr(ax, "coords"):
             ax.coords[0].set_ticks_position("b")

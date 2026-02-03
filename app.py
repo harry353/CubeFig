@@ -2,8 +2,6 @@ from flask import Flask, render_template, request, jsonify, send_file
 from backend.fits_handler import state
 from backend.plotter import create_plot
 from backend.moments.handler import handle_moment_calculation
-import argparse
-import json
 import numpy as np
 
 from backend.args import parse_arguments
