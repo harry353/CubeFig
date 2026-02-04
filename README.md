@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/cubefig_project_logo_trans_no_text.png" width="250">
+  <img src="assets/cubefig_project_logo_trans.png" width="250">
 </p>
 
 # CubeFig - Publication-Ready Moment Maps in Seconds
