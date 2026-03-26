@@ -2,3 +2,5 @@
 !examples/NGC1068_torus_CO32.fits
 !examples/NGC1068_torus_CO32_mask.fits
 *.svg
+*.png
+*.pyc

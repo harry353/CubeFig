@@ -6,7 +6,7 @@ import { updateStateFromUI, initializeUI } from './ui.js';
 import { renderView } from './render.js';
 import { handleMomentCalculation } from './moments.js';
 import { switchTab } from './tabs.js'; // switchTab also handles close logic if we export it or move it there
-import { handleExport } from './export.js';
+import { handleExport, handleExportCode } from './export.js';
 import { saveWorkspace, loadWorkspace } from './workspace.js';
 import { getDefaultSettings } from './constants.js'; // Needed for manual reset logic if needed
 
@@ -311,6 +311,13 @@ export function setupEventListeners() {
                 const fmt = link.dataset.fmt;
                 handleExport(fmt);
             });
+        });
+    }
+
+    if (elements.exportCodeBtn) {
+        elements.exportCodeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleExportCode();
         });
     }
 

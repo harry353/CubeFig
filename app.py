@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, jsonify, send_file
 from backend.fits_handler import state
 from backend.plotter import create_plot
 from backend.moments.handler import handle_moment_calculation
+from backend.code_exporter import generate_export_script
 import numpy as np
+import io
 
 from backend.args import parse_arguments
 
@@ -380,6 +382,53 @@ def export_plot():
         as_attachment=True, 
         download_name=f'plot.{export_fmt}'
     )
+
+@app.route('/export_code', methods=['POST'])
+def export_code():
+    if state.data is None:
+        return jsonify({'error': 'No data loaded'}), 400
+
+    req_data = request.get_json()
+
+    # Common visualisation params
+    params = {
+        'file_path': state.file_path,
+        'mask_path': state.mask_path,
+        'title': req_data.get('title', ''),
+        'fig_width': float(req_data.get('figWidth', 8)),
+        'fig_height': float(req_data.get('figHeight', 8)),
+        'grid': req_data.get('grid', False),
+        'show_beam': req_data.get('showBeam', False),
+        'show_center': req_data.get('showCenter', False),
+        'center_x': req_data.get('centerX'),
+        'center_y': req_data.get('centerY'),
+        'show_offset': req_data.get('showOffset', False),
+        'offset_angle_unit': req_data.get('offsetAngleUnit', 'arcsec'),
+        'show_physical': req_data.get('showPhysical', False),
+        'distance_val': req_data.get('distanceVal'),
+        'distance_unit': req_data.get('distanceUnit', 'Mpc'),
+        'norm_global': req_data.get('normGlobal', False),
+        'user_vmin': req_data.get('vmin'),
+        'user_vmax': req_data.get('vmax'),
+        'cbar_unit': req_data.get('cbarUnit', 'None'),
+        'invert_mask': req_data.get('invertMask', False),
+        'start_chan': req_data.get('startChan', 0),
+        'end_chan': req_data.get('endChan', 0),
+    }
+
+    if 'momentType' in req_data:
+        params['view_type'] = 'moment'
+        params['moment_type'] = req_data.get('momentType', '0')
+    else:
+        params['view_type'] = 'cube'
+        params['channel'] = int(req_data.get('channel', 0))
+
+    script = generate_export_script(params)
+    buf = io.BytesIO(script.encode('utf-8'))
+    buf.seek(0)
+    return send_file(buf, mimetype='text/x-python', as_attachment=True,
+                     download_name='cubefig_plot.py')
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

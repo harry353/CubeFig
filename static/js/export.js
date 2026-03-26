@@ -3,6 +3,60 @@ import { elements } from './dom.js';
 import * as api from './api.js';
 import { getRenderParams } from './render.js';
 
+export async function handleExportCode() {
+    elements.spinner.style.display = 'block';
+    try {
+        const params = getRenderParams();
+        const payload = { ...params };
+
+        // Add start/end channel from slider (needed for moment computation)
+        payload.startChan = parseInt(elements.valStart?.value || 0);
+        payload.endChan = parseInt(elements.valEnd?.value || 0);
+
+        // Add context (Channel or Moment)
+        if (state.activeTab === 'cube') {
+            payload.channel = state.lastRenderedChannel || 0;
+        } else {
+            payload.momentType = state.activeTab.replace('mom', '');
+        }
+
+        const response = await fetch('/export_code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            let filename = 'cubefig_plot';
+            if (params.title && params.title.trim() !== '') {
+                filename = params.title.toLowerCase().replace(/[()]/g, '').replace(/\s+/g, '_');
+            }
+            if (state.activeTab !== 'cube') {
+                const momType = state.activeTab.replace('mom', '');
+                filename += `_moment_${momType}`;
+            }
+            a.download = `${filename}.py`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } else {
+            const err = await response.json();
+            alert("Export code failed: " + (err.error || "Unknown error"));
+        }
+    } catch (error) {
+        console.error("Export Code Error:", error);
+        alert("Export code failed.");
+    } finally {
+        elements.spinner.style.display = 'none';
+    }
+}
+
 export async function handleExport(fmt) {
     elements.spinner.style.display = 'block';
     try {

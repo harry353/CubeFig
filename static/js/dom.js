@@ -57,6 +57,7 @@ export const elements = {
 
     // Export & Workspace
     get exportLinks() { return document.querySelectorAll('.export-link'); },
+    get exportCodeBtn() { return document.getElementById('exportCodeBtn'); },
     get saveWorkspaceBtn() { return document.getElementById('saveWorkspaceBtn'); },
     get loadWorkspaceBtn() { return document.getElementById('loadWorkspaceBtn'); },
     get workspaceInput() { return document.getElementById('workspaceInput'); },
